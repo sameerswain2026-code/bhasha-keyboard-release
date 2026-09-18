@@ -52,7 +52,16 @@ jobs:
             --dart-define="GEMINI_API_KEYS=$GEMINI_API_KEYS" \
             --dart-define="SARVAM_API_KEYS=$SARVAM_API_KEYS" \
             --dart-define="TAVILY_API_KEYS=$TAVILY_API_KEYS"
+      - name: Upload signed APK and AAB artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: bhasha-keyboard-signed-release
+          path: |
+            build/app/outputs/flutter-apk/*release*.apk
+            build/app/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
       - uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/v')
         with:
           generate_release_notes: true
           files: |
