@@ -32,7 +32,7 @@ jobs:
         run: |
           test -n "$KEYSTORE_B64"
           test -n "$KEY_PROPERTIES"
-          echo "$KEYSTORE_B64" | base64 --decode > android/upload-keystore.jks
+          echo "$KEYSTORE_B64" | base64 --decode > android/app/upload-keystore.jks
           printf '%s\n' "$KEY_PROPERTIES" > android/key.properties
       - run: flutter pub get
       - run: dart format .
