@@ -1,0 +1,53 @@
+name: Android Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+env:
+  JAVA_VERSION: '17'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.35.2'
+          channel: stable
+          cache: true
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+      - name: Restore Android signing files
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEY_PROPERTIES: ${{ secrets.ANDROID_KEY_PROPERTIES }}
+        run: |
+          test -n "$KEYSTORE_B64"
+          test -n "$KEY_PROPERTIES"
+          echo "$KEYSTORE_B64" | base64 --decode > android/upload-keystore.jks
+          printf '%s\n' "$KEY_PROPERTIES" > android/key.properties
+      - run: flutter pub get
+      - run: dart format --output=none --set-exit-if-changed .
+      - run: flutter analyze
+      - run: flutter test
+      - name: Build signed Android App Bundle
+        env:
+          GEMINI_API_KEYS: ${{ secrets.GEMINI_API_KEYS }}
+          SARVAM_API_KEYS: ${{ secrets.SARVAM_API_KEYS }}
+          TAVILY_API_KEYS: ${{ secrets.TAVILY_API_KEYS }}
+        run: >-
+          flutter build appbundle --release
+          --dart-define="GEMINI_API_KEYS=$GEMINI_API_KEYS"
+          --dart-define="SARVAM_API_KEYS=$SARVAM_API_KEYS"
+          --dart-define="TAVILY_API_KEYS=$TAVILY_API_KEYS"
+      - uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: build/app/outputs/bundle/release/app-release.aab
