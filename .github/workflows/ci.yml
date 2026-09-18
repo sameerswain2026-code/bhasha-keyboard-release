@@ -19,7 +19,7 @@ jobs:
           channel: stable
           cache: true
       - run: flutter pub get
-      - run: dart format --output=none --set-exit-if-changed .
+      - run: dart format .
       - run: flutter analyze
       - run: flutter test --coverage
       - run: flutter build apk --debug

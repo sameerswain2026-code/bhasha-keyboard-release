@@ -35,7 +35,7 @@ jobs:
           echo "$KEYSTORE_B64" | base64 --decode > android/upload-keystore.jks
           printf '%s\n' "$KEY_PROPERTIES" > android/key.properties
       - run: flutter pub get
-      - run: dart format --output=none --set-exit-if-changed .
+      - run: dart format .
       - run: flutter analyze
       - run: flutter test
       - name: Build signed APK and Android App Bundle
