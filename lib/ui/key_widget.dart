@@ -2,7 +2,6 @@
 library;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import 'kb_theme.dart';
 
@@ -70,9 +69,6 @@ class _KeyWidgetState extends State<KeyWidget> {
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
           onTapDown: (_) {
-            // Give fast typing immediate tactile confirmation, before the
-            // text insertion callback returns.
-            HapticFeedback.lightImpact();
             setState(() => _pressed = true);
           },
           onTapUp: (_) => setState(() => _pressed = false),

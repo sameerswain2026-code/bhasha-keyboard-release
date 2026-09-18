@@ -821,13 +821,14 @@ class _AlphaLayer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final nativePages = kb.scriptMode == ScriptMode.native &&
-            !kb.language.isLatin
-        ? nativeLayoutPagesFor(kb.language)
+    final layoutLanguage = kb.keyboardLanguage;
+    final nativePages = kb.keyboardScriptMode == ScriptMode.native &&
+            !layoutLanguage.isLatin
+        ? nativeLayoutPagesFor(layoutLanguage)
         : const <LayoutRows>[];
     final layout = nativePages.isNotEmpty
         ? nativePages[kb.nativePage % nativePages.length]
-        : layoutFor(kb.language, kb.scriptMode);
+        : layoutFor(layoutLanguage, kb.keyboardScriptMode);
     final isLatin = layout == kQwerty;
     final shiftActive = kb.shift != ShiftState.off;
 
@@ -1041,8 +1042,9 @@ class _BottomRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isAlpha = kb.layer == KeyboardLayer.alpha;
+    final layoutLanguage = kb.keyboardLanguage;
     final canToggleScript =
-        kb.language.supportsNative && kb.language.supportsRoman;
+        layoutLanguage.supportsNative && layoutLanguage.supportsRoman;
     final scale = kb.sizeScale;
 
     return Row(
@@ -1067,7 +1069,7 @@ class _BottomRow extends StatelessWidget {
         // MicIndicator), never in the toolbar/Menu.
         KeyWidget(
           label: canToggleScript
-              ? (kb.scriptMode == ScriptMode.roman ? 'क' : 'a')
+              ? (kb.keyboardScriptMode == ScriptMode.roman ? 'क' : 'a')
               : ',',
           special: canToggleScript,
           fontSize: canToggleScript ? 16 : 21,
@@ -1075,11 +1077,14 @@ class _BottomRow extends StatelessWidget {
           heightScale: scale,
           onTap: () async {
             if (canToggleScript) {
-              kb.setScriptMode(
-                kb.scriptMode == ScriptMode.roman
-                    ? ScriptMode.native
-                    : ScriptMode.roman,
-              );
+              final next = kb.keyboardScriptMode == ScriptMode.roman
+                  ? ScriptMode.native
+                  : ScriptMode.roman;
+              if (kb.micMode == MicMode.translate) {
+                kb.setTranslateOutputStyle(next);
+              } else {
+                kb.setScriptMode(next);
+              }
             } else {
               await kb.keyPressedDuringVoice();
               kb.insertText(',');
@@ -1087,7 +1092,7 @@ class _BottomRow extends StatelessWidget {
           },
           onLongPressStart: () => kb.togglePanel(ActivePanel.language),
         ),
-        if (kb.scriptMode == ScriptMode.native && !kb.language.isLatin)
+        if (kb.keyboardScriptMode == ScriptMode.native && !layoutLanguage.isLatin)
           KeyWidget(
             label: '${kb.nativePage + 1}/${kb.nativePageCount}',
             special: true,

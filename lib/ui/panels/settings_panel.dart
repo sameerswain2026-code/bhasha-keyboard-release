@@ -222,6 +222,22 @@ class SettingsPanel extends StatelessWidget {
                     },
                   ),
                 ),
+                SwitchListTile(
+                  dense: true,
+                  title: Text(
+                    'Auto-correct and grammar correction',
+                    style: TextStyle(fontSize: 13, color: t.keyText),
+                  ),
+                  subtitle: Text(
+                    kb.speechPolishingEnabled
+                        ? 'On - Gemini polishes speech; slower insertion'
+                        : 'Off - fastest real-time transcription/translation',
+                    style: TextStyle(fontSize: 11, color: t.keyTextSecondary),
+                  ),
+                  value: kb.speechPolishingEnabled,
+                  activeThumbColor: t.accent,
+                  onChanged: kb.setSpeechPolishing,
+                ),
                 const Divider(height: 12),
                 // ---- AI Web Assistant (optional, opt-in feature) ----
                 ListTile(

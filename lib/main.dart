@@ -45,13 +45,13 @@ class BhashaKeyboardApp extends StatelessWidget {
             theme: ThemeData(
               useMaterial3: true,
               brightness: Brightness.light,
-              colorSchemeSeed: const Color(0xFF1A73E8),
+              colorSchemeSeed: kb.themeSeedColor,
               scaffoldBackgroundColor: const Color(0xFFF7F8FA),
             ),
             darkTheme: ThemeData(
               useMaterial3: true,
               brightness: Brightness.dark,
-              colorSchemeSeed: const Color(0xFF8AB4F8),
+              colorSchemeSeed: kb.themeSeedColor,
               scaffoldBackgroundColor: const Color(0xFF121316),
             ),
             home: const _AppHome(),
@@ -156,12 +156,12 @@ class _BhashaImeAppState extends State<BhashaImeApp> {
             theme: ThemeData(
               useMaterial3: true,
               brightness: Brightness.light,
-              colorSchemeSeed: const Color(0xFF1A73E8),
+              colorSchemeSeed: kb.themeSeedColor,
             ),
             darkTheme: ThemeData(
               useMaterial3: true,
               brightness: Brightness.dark,
-              colorSchemeSeed: const Color(0xFF8AB4F8),
+              colorSchemeSeed: kb.themeSeedColor,
             ),
             home: const Scaffold(
               backgroundColor: Colors.transparent,

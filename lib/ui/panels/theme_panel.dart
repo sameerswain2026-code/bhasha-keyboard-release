@@ -68,6 +68,47 @@ class ThemePanel extends StatelessWidget {
               ),
             ],
           ),
+          const SizedBox(height: 12),
+          Text(
+            'Color palette',
+            style: TextStyle(fontSize: 12, color: t.keyTextSecondary),
+          ),
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (var i = 0; i < KeyboardController.themePalette.length; i++)
+                InkWell(
+                  onTap: () => kb.setThemePalette(i),
+                  borderRadius: BorderRadius.circular(18),
+                  child: Container(
+                    width: 28,
+                    height: 28,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: LinearGradient(
+                        colors: [
+                          KeyboardController.themePalette[i],
+                          Color.lerp(
+                                KeyboardController.themePalette[i],
+                                Colors.white,
+                                0.35,
+                              ) ??
+                              KeyboardController.themePalette[i],
+                        ],
+                      ),
+                      border: Border.all(
+                        color: kb.themePaletteIndex == i
+                            ? t.keyText
+                            : Colors.transparent,
+                        width: 2,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ],
       ),
     );

@@ -103,11 +103,16 @@ class KeyboardController extends ChangeNotifier {
 
   int _nativePage = 0;
   int get nativePage => _nativePage;
-  int get nativePageCount => _language.isLatin
+  LanguagePack get keyboardLanguage =>
+      _micMode == MicMode.translate ? _translateTarget : _language;
+  ScriptMode get keyboardScriptMode => _micMode == MicMode.translate
+      ? _translateOutputStyle
+      : _scriptMode;
+  int get nativePageCount => keyboardLanguage.isLatin
       ? 1
-      : nativeLayoutPagesFor(_language).length;
+      : nativeLayoutPagesFor(keyboardLanguage).length;
   void nextNativePage() {
-    if (_language.isLatin) return;
+    if (keyboardLanguage.isLatin) return;
     _nativePage = (_nativePage + 1) % nativePageCount;
     notifyListeners();
   }
@@ -239,6 +244,17 @@ class KeyboardController extends ChangeNotifier {
   // ---- Theme ----
   ThemeMode _themeMode = ThemeMode.system;
   ThemeMode get themeMode => _themeMode;
+  static const themePalette = <Color>[
+    Color(0xFF1A73E8), Color(0xFF6750A4), Color(0xFF00695C),
+    Color(0xFF00838F), Color(0xFF1565C0), Color(0xFF2E7D32),
+    Color(0xFF558B2F), Color(0xFFEF6C00), Color(0xFFD84315),
+    Color(0xFFC62828), Color(0xFFAD1457), Color(0xFF6A1B9A),
+    Color(0xFF4527A0), Color(0xFF283593), Color(0xFF37474F),
+    Color(0xFF795548),
+  ];
+  int _themePaletteIndex = 0;
+  int get themePaletteIndex => _themePaletteIndex;
+  Color get themeSeedColor => themePalette[_themePaletteIndex];
 
   // ---- Feedback settings ----
   bool _hapticsEnabled = true;
@@ -300,6 +316,8 @@ class KeyboardController extends ChangeNotifier {
 
   final TranslationEngine _translationEngine = TranslationEngine();
   final GeminiService _speechPolisher = GeminiService();
+  bool _speechPolishingEnabled = false;
+  bool get speechPolishingEnabled => _speechPolishingEnabled;
 
   // ---- Transcribe mode config (Method: mic-side Language Selector) ----
   // Independent of the general typing [_language] - the mic's Transcribe
@@ -390,6 +408,7 @@ class KeyboardController extends ChangeNotifier {
     _translateSource = _draftSource;
     _translateTarget = _draftTarget;
     _translateOutputStyle = _draftStyle;
+    _nativePage = 0;
     _translateEverActivated = true;
     _persist('translateSource', _translateSource.id);
     _persist('translateTarget', _translateTarget.id);
@@ -397,6 +416,15 @@ class KeyboardController extends ChangeNotifier {
     _persist('translateEverActivated', true);
     setMicMode(MicMode.translate);
     closePanel();
+  }
+
+  void setTranslateOutputStyle(ScriptMode style) {
+    if (style == ScriptMode.native && !_translateTarget.supportsNative) return;
+    _translateOutputStyle = style;
+    _draftStyle = style;
+    _nativePage = 0;
+    _persist('translateStyle', style.name);
+    notifyListeners();
   }
 
   // ---- Auto Mix mode config ----
@@ -629,8 +657,13 @@ class KeyboardController extends ChangeNotifier {
           orElse: () => ThemeMode.system,
         );
       }
+      _themePaletteIndex = (prefs.getInt('themePalette') ?? 0).clamp(
+        0,
+        themePalette.length - 1,
+      );
       _hapticsEnabled = prefs.getBool('haptics') ?? true;
       _soundEnabled = prefs.getBool('sound') ?? false;
+      _speechPolishingEnabled = prefs.getBool('speechPolishing') ?? false;
       final micModeName = prefs.getString('micMode');
       if (micModeName != null) {
         _micMode = MicMode.values.firstWhere(
@@ -740,6 +773,10 @@ class KeyboardController extends ChangeNotifier {
                   orElse: () => ThemeMode.system,
                 );
               }
+            case 'themePalette':
+              if (v is int) {
+                _themePaletteIndex = v.clamp(0, themePalette.length - 1);
+              }
             case 'micMode':
               if (v is String) {
                 _micMode = MicMode.values.firstWhere(
@@ -751,6 +788,8 @@ class KeyboardController extends ChangeNotifier {
               if (v is bool) _hapticsEnabled = v;
             case 'sound':
               if (v is bool) _soundEnabled = v;
+            case 'speechPolishing':
+              if (v is bool) _speechPolishingEnabled = v;
             case 'transcribeLang':
               if (v is String) _transcribeLanguage = LanguageRegistry.byId(v);
             case 'transcribeStyle':
@@ -1403,6 +1442,12 @@ class KeyboardController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setThemePalette(int index) {
+    _themePaletteIndex = index.clamp(0, themePalette.length - 1);
+    _persist('themePalette', _themePaletteIndex);
+    notifyListeners();
+  }
+
   void setHaptics(bool v) {
     _hapticsEnabled = v;
     _persist('haptics', v);
@@ -1412,6 +1457,12 @@ class KeyboardController extends ChangeNotifier {
   void setSound(bool v) {
     _soundEnabled = v;
     _persist('sound', v);
+    notifyListeners();
+  }
+
+  void setSpeechPolishing(bool v) {
+    _speechPolishingEnabled = v;
+    _persist('speechPolishing', v);
     notifyListeners();
   }
 
@@ -1487,6 +1538,7 @@ class KeyboardController extends ChangeNotifier {
   /// Translate mode to the mic.
   void setMicMode(MicMode mode) {
     _micMode = mode;
+    _nativePage = 0;
     if (mode == MicMode.translate) _translateEverActivated = true;
     _persist('micMode', mode.name);
     _persist('translateEverActivated', _translateEverActivated);
@@ -1503,7 +1555,12 @@ class KeyboardController extends ChangeNotifier {
   Future<void> _processVoiceFinal(String rawText) async {
     // Committed text is never erased: append finalized speech.
     if (rawText.trim().isEmpty) return;
-    final text = await _polishVoiceText(rawText.trim());
+    // Translate is polished once after translation; Transcribe/Auto-mix are
+    // polished once before insertion/assistant routing. This avoids the old
+    // two-Gemini-call delay in Translate mode.
+    final text = micMode == MicMode.translate
+        ? rawText.trim()
+        : await _polishVoiceText(rawText.trim());
 
     // AI Web Assistant middleware (optional, opt-in - see the field docs
     // on [_ai]/[_aiCapture] above). Only ever consulted for
@@ -1557,6 +1614,7 @@ class KeyboardController extends ChangeNotifier {
     String? language,
     bool? native,
   }) {
+    if (!_speechPolishingEnabled) return Future.value(text);
     final selectedLanguage = language ??
         (micMode == MicMode.transcribe
             ? _transcribeLanguage.englishName
