@@ -14,6 +14,7 @@ import '../data/languages.dart';
 import '../data/layouts.dart';
 import '../engine/ai_assistant_engine.dart';
 import '../engine/ai_command_capture.dart';
+import '../engine/gemini_service.dart';
 import '../engine/suggestion_engine.dart';
 import '../engine/transliterator.dart';
 import '../engine/translation_engine.dart';
@@ -298,6 +299,7 @@ class KeyboardController extends ChangeNotifier {
       : _micMode;
 
   final TranslationEngine _translationEngine = TranslationEngine();
+  final GeminiService _speechPolisher = GeminiService();
 
   // ---- Transcribe mode config (Method: mic-side Language Selector) ----
   // Independent of the general typing [_language] - the mic's Transcribe
@@ -1482,9 +1484,13 @@ class KeyboardController extends ChangeNotifier {
   }
 
   void _onVoiceFinal(String rawText) {
+    unawaited(_processVoiceFinal(rawText));
+  }
+
+  Future<void> _processVoiceFinal(String rawText) async {
     // Committed text is never erased: append finalized speech.
     if (rawText.trim().isEmpty) return;
-    final text = rawText.trim();
+    final text = await _polishVoiceText(rawText.trim());
 
     // AI Web Assistant middleware (optional, opt-in - see the field docs
     // on [_ai]/[_aiCapture] above). Only ever consulted for
@@ -1525,7 +1531,32 @@ class KeyboardController extends ChangeNotifier {
       return;
     }
     // Translate mode needs an async pivot-translation step.
-    _resolveVoiceText(text).then(_appendVoiceText);
+    final translated = await _resolveVoiceText(text);
+    _appendVoiceText(await _polishVoiceText(
+      translated,
+      language: _translateTarget.englishName,
+      native: _translateOutputStyle == ScriptMode.native,
+    ));
+  }
+
+  Future<String> _polishVoiceText(
+    String text, {
+    String? language,
+    bool? native,
+  }) {
+    final selectedLanguage = language ??
+        (micMode == MicMode.transcribe
+            ? _transcribeLanguage.englishName
+            : 'the detected language');
+    final selectedNative = native ??
+        (micMode == MicMode.transcribe
+            ? _transcribeStyle == ScriptMode.native
+            : _autoMixStyle == ScriptMode.native);
+    return _speechPolisher.polishSpeech(
+      text,
+      language: selectedLanguage,
+      native: selectedNative,
+    );
   }
 
   /// Mic session ended, for any reason (manual stop, silence auto-stop,

@@ -78,6 +78,31 @@ class GeminiService {
   final GeminiKeyPool _pool;
   final http.Client _client;
 
+  /// Removes accidental repetitions and fixes obvious grammar in a finalized
+  /// speech segment without translating or changing its meaning. If Gemini is
+  /// unavailable, the caller can safely keep the original segment.
+  Future<String> polishSpeech(
+    String text, {
+    required String language,
+    required bool native,
+  }) async {
+    final original = text.trim();
+    if (original.isEmpty) return original;
+    final prompt = '''You are a conservative multilingual speech-to-text editor.
+Input language: $language.
+${native ? 'Keep the original native script.' : 'Keep the requested Roman/Latin output style.'}
+Clean this transcript for insertion into a message. Remove accidental repeated words, repeated phrases, stutters, and filler words. Correct obvious spelling, grammar, punctuation, and spacing. Make it clear and professional, but do not summarize, translate, add facts, or change meaning. Preserve names, numbers, URLs, code, and meaningful language mixing. Return only the corrected text.
+
+Transcript:
+$original''';
+    try {
+      final result = (await _generateText(prompt)).trim();
+      return result.isEmpty ? original : result;
+    } catch (_) {
+      return original;
+    }
+  }
+
   /// AI Router step: ask Gemini whether it can answer [query] directly
   /// or needs live web search. Throws on any failure (network,
   /// timeout, malformed response, all keys exhausted) - callers must
