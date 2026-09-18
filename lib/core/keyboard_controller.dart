@@ -1007,10 +1007,23 @@ class KeyboardController extends ChangeNotifier {
   /// against the OLD shadow text, which may no longer correspond to
   /// anything real at the new cursor position after an external edit.
   void syncFromHost(String before, String after) {
+    final hostText = before + after;
+    // Android also calls this for a cursor-only move. Preserve composing
+    // state and the existing shadow text in that case; rebuilding the value
+    // here made the next key use a stale anchor and could duplicate text.
+    if (hostText == editor.text) {
+      editor.selection = TextSelection.collapsed(
+        offset: before.length.clamp(0, hostText.length),
+      );
+      notifyListeners();
+      return;
+    }
     _composing = '';
     editor.value = TextEditingValue(
-      text: before + after,
-      selection: TextSelection.collapsed(offset: before.length),
+      text: hostText,
+      selection: TextSelection.collapsed(
+        offset: before.length.clamp(0, hostText.length),
+      ),
     );
     _updateSuggestions();
     notifyListeners();

@@ -44,7 +44,7 @@ jobs:
           SARVAM_API_KEYS: ${{ secrets.SARVAM_API_KEYS }}
           TAVILY_API_KEYS: ${{ secrets.TAVILY_API_KEYS }}
         run: >-
-          flutter build apk --release
+          flutter build apk --release --split-per-abi
           flutter build appbundle --release
           --dart-define="GEMINI_API_KEYS=$GEMINI_API_KEYS"
           --dart-define="SARVAM_API_KEYS=$SARVAM_API_KEYS"
@@ -53,5 +53,5 @@ jobs:
         with:
           generate_release_notes: true
           files: |
-            build/app/outputs/flutter-apk/app-release.apk
+            build/app/outputs/flutter-apk/*release*.apk
             build/app/outputs/bundle/release/app-release.aab
