@@ -38,7 +38,7 @@ class GeminiKeyPool {
       }
     }
     _failed.clear();
-    _index = i;
+    _index = 0;
     return false;
   }
 
