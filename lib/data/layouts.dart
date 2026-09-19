@@ -8,34 +8,41 @@ class LayoutRows {
   const LayoutRows(this.rows);
 }
 
-/// Split a language's native Unicode block into Gboard-like pages. The first
-/// page keeps the familiar high-frequency layout; subsequent pages expose the
-/// remaining script characters, vowel signs, marks and punctuation.
+/// Ordered inventories used by the optional native language packs. Keeping an
+/// explicit inventory avoids displaying unassigned Unicode code points (the
+/// old block scan produced blank/missing-looking keys) and follows the
+/// alphabet-first, signs-after layout used by Indic keyboards.
+const Map<String, String> kNativeCharacterSets = {
+  'hi': 'अआइईउऊऋएऐओऔअंअःकखगघङचछजझञटठडढणतथदधनपफबभमयरलवशषसहळक्षत्रज्ञ़ँंः्ािीुूृेैोौॅॉॐ०१२३४५६७८९',
+  'bn': 'অআইঈউঊঋএঐওঔঅংঅঃকখগঘঙচছজঝঞটঠডঢণতথদধনপফবভমযরলশষসহড়ঢ়য়ক্ষজ্ঞ়ঁংঃ্ািীুূৃেৈোৌৗৠ০১২৩৪৫৬৭৮৯',
+  'as': 'অআইঈউঊঋএঐওঔঅংঅঃকখগঘঙচছজঝঞটঠডঢণতথদধনপফবভমযৰলশষসহড়ঢ়ৱক্ষজ্ঞ়ঁংঃ্ািীুূৃেৈোৌৗ০১২৩৪৫৬৭৮৯',
+  'or': 'ଅଆଇଈଉଊଋଏଐଓଔଅଂଅଃକଖଗଘଙଚଛଜଝଞଟଠଡଢଣତଥଦଧନପଫବଭମଯରଲୱଶଷସହଳକ୍ଷଜ୍ଞଡ଼ଢ଼ୟ୍ାିୀୁୂୃେୈୋୌଁଂଃ୦୧୨୩୪୫୬୭୮୯',
+  'ta': 'அஆஇஈஉஊஎஏஐஒஓஔஃகஙசஞடணதநபமயரலவழளறனஜஷஸஹக்ஷ்ாிீுூெேைொோௌ௧௨௩௪௫௬௭௮௯',
+  'te': 'అఆఇఈఉఊఋౠఎఏఐఒఓఔఅంఅఃకఖగఘఙచఛజఝఞటఠడఢణతథదధనపఫబభమయరలవశషసహళక్షజ్ఞఱ్ంః్ాిీుూృౄెేైొోౌ౧౨౩౪౫౬౭౮౯',
+  'kn': 'ಅಆಇಈಉಊಋೠಎಏಐಒಓಔಅಂಅಃಕಖಗಘಙಚಛಜಝಞಟಠಡಢಣತಥದಧನಪಫಬಭಮಯರಲವಶಷಸಹಳಕ್ಷಜ್ಞಱಂಃ್ಾಿೀುೂೃೄೆೇೈೊೋೌ೦೧೨೩೪೫೬೭೮೯',
+  'ml': 'അആഇഈഉഊഋൠഎഏഐഒഓഔഅംഅഃകഖഗഘങചഛജഝഞടഠഡഢണതഥദധനപഫബഭമയരലവശഷസഹളഴറനക്ഷജ്ഞ്ാിീുൂൃെേൈൊോൌംഃ൦൧൨൩൪൫൬൭൮൯',
+  'gu': 'અઆઇઈઉઊઋએઐઓઔઅંઅઃકખગઘઙચછજઝઞટઠડઢણતથદધનપફબભમયરલવશષસહળક્ષજ્ઞૅૉ્ાિીુૂૃેૈોૌંઃ૦૧૨૩૪૫૬૭૮૯',
+  'pa': 'ਅਆਇਈਉਊਏਐਓਔਅੰਅਃਕਖਗਘਙਚਛਜਝਞਟਠਡਢਣਤਥਦਧਨਪਫਬਭਮਯਰਲਵਸ਼ਸਹੜਖ਼ਗ਼ਜ਼ਫ਼ਸ਼੍ਾਂਿੀੁੂੇੈੋੌੰਃ੦੧੨੩੪੫੬੭੮੯',
+  'ur': 'ا ب پ ت ٹ ث ج چ ح خ د ڈ ذ ر ڑ ز ژ س ش ص ض ط ظ ع غ ف ق ک گ ل م ن ں و ہ ھ ء ی ے آ ئ ۓ ُ َ ِ ْ ّ ۔ ۰۱۲۳۴۵۶۷۸۹',
+  'ks': 'ا آ ب پ ت ٹ ث ج چ ح خ د ڈ ذ ر ڑ ز ژ س ش ص ض ط ظ ع غ ف ق ک گ ل م ن ں و ہ ھ ء ی ے ٲ ٳ ۂ ۃ َ ُ ِ ْ ّ ۔ ۰۱۲۳۴۵۶۷۸۹',
+  'sd': 'ا آ ب ٻ ڀ پ ت ٽ ٺ ث ج ڄ ڃ چ ڇ ح خ د ڊ ڌ ڏ ذ ر ڙ ز ژ س ش ص ض ط ظ ع غ ف ق ڪ ک گ ڳ ل م ن ڻ و ه ھ ء ي ئ َ ُ ِ ْ ّ ۔ ۰۱۲۳۴۵۶۷۸۹',
+  'sat': 'ᱚᱛᱜᱝᱞᱟᱠᱡᱢᱣᱤᱥᱦᱧᱨᱩᱪᱫᱬᱭᱮᱯᱰᱱᱲᱳᱴᱵᱶᱷᱸᱹᱺᱻᱼᱽ',
+  'mni': 'ꯀꯁꯂꯃꯄꯅꯆꯇꯈꯉꯊꯋꯌꯍꯎꯏꯐꯑꯒꯓꯔꯕꯖꯗꯘꯙꯚꯛꯜꯝꯞꯟꯠꯡꯢꯣꯤꯥꯦꯧꯨꯩꯪ꯫',
+};
+
+String _nativeCharactersFor(LanguagePack pack) {
+  if (kNativeCharacterSets.containsKey(pack.id)) return kNativeCharacterSets[pack.id]!;
+  if (pack.family == ScriptFamily.brahmic) return kNativeCharacterSets['hi']!;
+  if (pack.family == ScriptFamily.arabic) return kNativeCharacterSets['ur']!;
+  return '';
+}
+
+/// Split the ordered native alphabet into comfortable Gboard-like pages.
 List<LayoutRows> nativeLayoutPagesFor(LanguagePack pack) {
   final first = kNativeLayouts[pack.id] ?? kDevanagariFallback;
-  final seen = <String>{for (final row in first.rows) ...row};
-  final chars = <String>[...seen];
-  if (pack.family == ScriptFamily.brahmic && pack.scriptBase > 0) {
-    for (var offset = 0; offset < 0x80; offset++) {
-      final c = String.fromCharCode(pack.scriptBase + offset);
-      if (!seen.contains(c)) chars.add(c);
-    }
-  } else if (pack.family == ScriptFamily.arabic) {
-    for (var cp = 0x0600; cp <= 0x06FF; cp++) {
-      final c = String.fromCharCode(cp);
-      if (!seen.contains(c)) chars.add(c);
-    }
-  } else if (pack.family == ScriptFamily.olChiki) {
-    for (var cp = 0x1C5A; cp <= 0x1C7F; cp++) {
-      final c = String.fromCharCode(cp);
-      if (!seen.contains(c)) chars.add(c);
-    }
-  } else if (pack.family == ScriptFamily.meeteiMayek) {
-    for (var cp = 0xABC0; cp <= 0xABFF; cp++) {
-      final c = String.fromCharCode(cp);
-      if (!seen.contains(c)) chars.add(c);
-    }
-  }
+  final raw = _nativeCharactersFor(pack);
+  final chars = <String>{...raw.runes.map(String.fromCharCode)}.toList();
+  if (chars.isEmpty) return [first];
   final pages = <LayoutRows>[];
   for (var i = 0; i < chars.length; i += 27) {
     final end = i + 27 < chars.length ? i + 27 : chars.length;

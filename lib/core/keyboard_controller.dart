@@ -106,8 +106,13 @@ class KeyboardController extends ChangeNotifier {
   LanguagePack get keyboardLanguage =>
       _micMode == MicMode.translate ? _translateTarget : _language;
   ScriptMode get keyboardScriptMode => _micMode == MicMode.translate
-      ? _translateOutputStyle
-      : _scriptMode;
+      ? (_translateOutputStyle == ScriptMode.native &&
+              !isLanguageInstalled(_translateTarget)
+          ? ScriptMode.roman
+          : _translateOutputStyle)
+      : (_scriptMode == ScriptMode.native && !isLanguageInstalled(_language)
+          ? ScriptMode.roman
+          : _scriptMode);
   int get nativePageCount => keyboardLanguage.isLatin
       ? 1
       : nativeLayoutPagesFor(keyboardLanguage).length;
@@ -229,6 +234,27 @@ class KeyboardController extends ChangeNotifier {
   // ---- Language / script ----
   LanguagePack _language = LanguageRegistry.byId('en');
   LanguagePack get language => _language;
+
+  /// Native alphabets are optional packs so the base APK stays lightweight.
+  /// English is built in; other packs become available after installation.
+  final Set<String> _installedLanguagePacks = {'en'};
+  bool isLanguageInstalled(LanguagePack pack) =>
+      pack.isLatin || _installedLanguagePacks.contains(pack.id);
+  List<String> get installedLanguagePackIds =>
+      List.unmodifiable(_installedLanguagePacks);
+
+  void installLanguagePack(LanguagePack pack) {
+    _installedLanguagePacks.add(pack.id);
+    _persist('installedLanguagePacks', _installedLanguagePacks.toList());
+    notifyListeners();
+  }
+
+  void uninstallLanguagePack(LanguagePack pack) {
+    if (pack.id == 'en' || pack.id == _language.id) return;
+    _installedLanguagePacks.remove(pack.id);
+    _persist('installedLanguagePacks', _installedLanguagePacks.toList());
+    notifyListeners();
+  }
 
   ScriptMode _scriptMode = ScriptMode.roman;
   ScriptMode get scriptMode => _scriptMode;
@@ -644,6 +670,10 @@ class KeyboardController extends ChangeNotifier {
   Future<void> _loadPrefs() async {
     try {
       final prefs = await SharedPreferences.getInstance();
+      _installedLanguagePacks
+        ..clear()
+        ..addAll(prefs.getStringList('installedLanguagePacks') ?? const ['en']);
+      _installedLanguagePacks.add('en');
       final langId = prefs.getString('language');
       if (langId != null) _language = LanguageRegistry.byId(langId);
       final mode = prefs.getString('scriptMode');
@@ -1691,6 +1721,20 @@ class KeyboardController extends ChangeNotifier {
   Future<String> _resolveVoiceText(String text) async {
     if (_micMode != MicMode.translate) return text;
     try {
+      // The offline provider has no semantic Indic-to-Indic dictionary and
+      // previously returned transliteration, which made Hindi↔Odia,
+      // Bengali↔Odia, etc. appear untranslated. Use the configured Gemini
+      // service for these pairs while retaining the fast offline path for
+      // English pairs.
+      if (!_translateSource.isLatin && !_translateTarget.isLatin &&
+          _translateSource.id != _translateTarget.id) {
+        return await _speechPolisher.translateText(
+          text,
+          sourceLanguage: _translateSource.englishName,
+          targetLanguage: _translateTarget.englishName,
+          native: _translateOutputStyle == ScriptMode.native,
+        );
+      }
       String english = text;
       if (!_serverSideTranslateSupported) {
         english = _translateSource.id == 'en'
@@ -1793,6 +1837,17 @@ class KeyboardController extends ChangeNotifier {
     // destination language. This avoids the old trial-through-every-language
     // behavior, which was slow and often selected the wrong source.
     final source = TranslationLanguageDetector.detect(text);
+    if (!source.isLatin && !target.isLatin && source.id != target.id) {
+      final translated = await _speechPolisher.translateText(
+        text,
+        sourceLanguage: source.englishName,
+        targetLanguage: target.englishName,
+        native: target.supportsNative,
+      );
+      await replacer(translated);
+      if (speak) await hostTextSpeaker?.call(translated, target.locale);
+      return;
+    }
     final english = source.id == 'en'
         ? text
         : await _translationEngine.translate(

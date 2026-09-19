@@ -120,6 +120,29 @@ class LanguagePanel extends StatelessWidget {
                               color: t.keyTextSecondary,
                             ),
                           const SizedBox(width: 6),
+                          if (!lang.isLatin && !kb.isLanguageInstalled(lang))
+                            IconButton(
+                              tooltip: 'Download native keyboard',
+                              visualDensity: VisualDensity.compact,
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(
+                                minWidth: 30,
+                                minHeight: 30,
+                              ),
+                              icon: Icon(
+                                Icons.download_outlined,
+                                size: 18,
+                                color: t.accent,
+                              ),
+                              onPressed: () => kb.installLanguagePack(lang),
+                            )
+                          else if (!lang.isLatin)
+                            Icon(
+                              Icons.download_done_outlined,
+                              size: 17,
+                              color: t.accent,
+                            ),
+                          const SizedBox(width: 6),
                           if (selected)
                             Icon(Icons.check_circle, size: 18, color: t.accent),
                         ],

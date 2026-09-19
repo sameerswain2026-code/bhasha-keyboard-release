@@ -35,6 +35,31 @@ class KbTheme {
     required this.panelBg,
   });
 
+  KbTheme copyWith({
+    Color? keyBg,
+    Color? keyBgSpecial,
+    Color? keyBgPressed,
+    Color? icon,
+    Color? accent,
+    Color? accentText,
+    Color? border,
+    Color? panelBg,
+  }) => KbTheme(
+    background: background,
+    keyBg: keyBg ?? this.keyBg,
+    keyBgSpecial: keyBgSpecial ?? this.keyBgSpecial,
+    keyBgPressed: keyBgPressed ?? this.keyBgPressed,
+    keyText: keyText,
+    keyTextSecondary: keyTextSecondary,
+    icon: icon ?? this.icon,
+    accent: accent ?? this.accent,
+    accentText: accentText ?? this.accentText,
+    stripBg: stripBg,
+    suggestionText: suggestionText,
+    border: border ?? this.border,
+    panelBg: panelBg ?? this.panelBg,
+  );
+
   static const light = KbTheme(
     background: Color(0xFFE8EAED),
     keyBg: Color(0xFFFFFFFF),
@@ -68,6 +93,17 @@ class KbTheme {
   );
 
   static KbTheme of(BuildContext context) {
-    return Theme.of(context).brightness == Brightness.dark ? dark : light;
+    final material = Theme.of(context);
+    final base = material.brightness == Brightness.dark ? dark : light;
+    final primary = material.colorScheme.primary;
+    final surface = material.colorScheme.surface;
+    return base.copyWith(
+      accent: primary,
+      accentText: material.colorScheme.onPrimary,
+      keyBgSpecial: Color.alphaBlend(primary.withValues(alpha: 0.12), base.keyBg),
+      keyBgPressed: Color.alphaBlend(primary.withValues(alpha: 0.24), base.keyBg),
+      border: Color.alphaBlend(primary.withValues(alpha: 0.28), base.border),
+      panelBg: Color.alphaBlend(primary.withValues(alpha: 0.035), surface),
+    );
   }
 }

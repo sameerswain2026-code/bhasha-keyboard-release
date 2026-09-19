@@ -103,6 +103,27 @@ $original''';
     }
   }
 
+  /// Translates arbitrary supported-language text while preserving the
+  /// requested output script. Used when the offline pair dictionary has no
+  /// reliable Indic-to-Indic route.
+  Future<String> translateText(
+    String text, {
+    required String sourceLanguage,
+    required String targetLanguage,
+    required bool native,
+  }) async {
+    final original = text.trim();
+    if (original.isEmpty || sourceLanguage == targetLanguage) return original;
+    final prompt = '''Translate the following text from $sourceLanguage to $targetLanguage.
+${native ? 'Use the native script of the target language.' : 'Use Latin/Roman transliteration only if the target language supports it.'}
+Preserve meaning, names, numbers, punctuation, and line breaks. Return only the translation, with no explanation.
+
+Text:
+$original''';
+    final result = (await _generateText(prompt)).trim();
+    return result.isEmpty ? original : result;
+  }
+
   /// AI Router step: ask Gemini whether it can answer [query] directly
   /// or needs live web search. Throws on any failure (network,
   /// timeout, malformed response, all keys exhausted) - callers must

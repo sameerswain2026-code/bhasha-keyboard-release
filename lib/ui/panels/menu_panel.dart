@@ -28,11 +28,7 @@ class _MenuItem {
 const List<_MenuItem> _items = [
   _MenuItem(Icons.palette_outlined, 'Theme', panel: ActivePanel.theme),
   _MenuItem(Icons.gif_box_outlined, 'GIF', panel: ActivePanel.gif),
-  _MenuItem(
-    Icons.emoji_emotions_outlined,
-    'Sticker',
-    panel: ActivePanel.sticker,
-  ),
+  _MenuItem(Icons.sticky_note_2_outlined, 'Sticker', panel: ActivePanel.sticker),
   _MenuItem(Icons.mood, 'Emoji', panel: ActivePanel.emoji),
   _MenuItem(Icons.text_fields, 'Text Editing', panel: ActivePanel.textEditing),
   _MenuItem(

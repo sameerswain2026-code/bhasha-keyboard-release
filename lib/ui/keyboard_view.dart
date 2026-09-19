@@ -1122,6 +1122,7 @@ class _BottomRow extends StatelessWidget {
             await kb.keyPressedDuringVoice();
             kb.insertText(' ');
           },
+          onLongPressStart: () => kb.togglePanel(ActivePanel.language),
         ),
         KeyWidget(
           label: '.',
