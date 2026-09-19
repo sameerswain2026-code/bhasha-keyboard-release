@@ -35,6 +35,11 @@ class ImeBridge {
 
   Future<void> _onNativeCall(MethodCall call) async {
     switch (call.method) {
+      case 'resetTransientState':
+        // onStartInputView can fire when Android reuses the existing IME
+        // engine after minimize/reopen, without a new input session.
+        // Always return to the main keyboard page at that boundary.
+        kb.resetTransientStateForNewInput();
       case 'startInput':
         final args = (call.arguments as Map?) ?? {};
         final action = args['action'] as String? ?? 'newline';

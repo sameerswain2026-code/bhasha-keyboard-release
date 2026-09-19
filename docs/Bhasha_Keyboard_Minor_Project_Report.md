@@ -752,7 +752,7 @@ Overall, the project meets the objectives of a B.Tech. Minor Project by applying
 | Primary platform | Android |
 | Primary framework | Flutter |
 | Native integration | Kotlin Android IME service |
-| Application package | `com.bhashakeyboard.ime` |
+| Application package | `com.bhasha.keyboard` |
 | Minimum platform | Android 6.0/API 23 or project-configured minimum |
 | Core language count | 22 Indian-language packs as documented by the project |
 | Optional services | Sarvam AI, Gemini, Tavily |

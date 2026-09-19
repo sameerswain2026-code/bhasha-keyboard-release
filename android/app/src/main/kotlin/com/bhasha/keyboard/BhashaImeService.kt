@@ -1,4 +1,4 @@
-package com.bhashakeyboard.ime
+package com.bhasha.keyboard
 
 import android.Manifest
 import android.content.ClipboardManager
@@ -333,6 +333,13 @@ class BhashaImeService : InputMethodService() {
     override fun onStartInputView(info: EditorInfo?, restarting: Boolean) {
         super.onStartInputView(info, restarting)
         flutterEngine?.lifecycleChannel?.appIsResumed()
+
+        // Android may reuse the same IME FlutterEngine when the keyboard is
+        // minimized and shown again without creating a new input session.
+        // Reset the visible page at the view boundary as well as on
+        // startInput, so Settings/emoji/symbol panels cannot survive a
+        // minimize -> reopen cycle.
+        imeChannel?.invokeMethod("resetTransientState", null)
 
         val actionName = when ((info?.imeOptions ?: 0) and EditorInfo.IME_MASK_ACTION) {
             EditorInfo.IME_ACTION_SEND -> "send"

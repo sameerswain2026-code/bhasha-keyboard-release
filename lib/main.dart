@@ -177,8 +177,9 @@ class _BhashaImeAppState extends State<BhashaImeApp> {
   }
 }
 
-/// Demo host screen: a messaging-style editor with the keyboard docked
-/// at the bottom - mirrors how the IME appears inside Android apps.
+/// Branded demo host screen. It mirrors the Play Store banner: blue-purple
+/// identity, Indian-language chips, a chat-style preview, and the live IME
+/// docked below so the first launch feels like a product showcase.
 class DemoEditorScreen extends StatelessWidget {
   const DemoEditorScreen({super.key});
 
@@ -189,87 +190,137 @@ class DemoEditorScreen extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
+      backgroundColor: isDark
+          ? const Color(0xFF10142A)
+          : const Color(0xFFF8FAFF),
       body: SafeArea(
         child: Column(
           children: [
-            // App bar
             Container(
-              height: 52,
-              padding: const EdgeInsets.symmetric(horizontal: 14),
-              child: Row(
-                children: [
-                  Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF1A73E8), Color(0xFF7C4DFF)],
-                      ),
-                      borderRadius: BorderRadius.circular(9),
-                    ),
-                    child: const Center(
-                      child: Text(
-                        'भ',
-                        style: TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
+              margin: const EdgeInsets.fromLTRB(12, 10, 12, 6),
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 13),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF087FE8), Color(0xFF6927D8)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(22),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x331A73E8),
+                    blurRadius: 16,
+                    offset: Offset(0, 7),
                   ),
-                  const SizedBox(width: 10),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
                     children: [
-                      Text(
-                        'Bhasha Keyboard',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                          color: t.keyText,
+                      Container(
+                        width: 38,
+                        height: 38,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.18),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Center(
+                          child: Text(
+                            'भ',
+                            style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                            ),
+                          ),
                         ),
                       ),
-                      Text(
-                        '22 Indian languages · Voice · Emoji · GIF',
-                        style: TextStyle(
-                          fontSize: 10.5,
-                          color: t.keyTextSecondary,
+                      const SizedBox(width: 10),
+                      const Expanded(
+                        child: Text(
+                          'Bhasha Keyboard',
+                          style: TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 9,
+                          vertical: 5,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.18),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Text(
+                          kb.language.englishName,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                     ],
                   ),
-                  const Spacer(),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
+                  const SizedBox(height: 13),
+                  const Text(
+                    'One keyboard.\nMany Indias.',
+                    style: TextStyle(
+                      fontSize: 25,
+                      height: 1.05,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
                     ),
-                    decoration: BoxDecoration(
-                      color: t.accent.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(12),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Type India, your way.',
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      fontStyle: FontStyle.italic,
+                      color: Color(0xFFE5EDFF),
                     ),
-                    child: Text(
-                      kb.language.englishName,
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: t.accent,
-                      ),
-                    ),
+                  ),
+                  const SizedBox(height: 11),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: const [
+                      'हिन्दी',
+                      'தமிழ்',
+                      'తెలుగు',
+                      'বাংলা',
+                      'मराठी',
+                      '+ 16 more',
+                    ].map((label) => _LanguageChip(label)).toList(),
                   ),
                 ],
               ),
             ),
-            // Demo editor area
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+              child: Row(
+                children: const [
+                  _FeaturePill(Icons.language, '22 Languages'),
+                  _FeaturePill(Icons.mic_none, 'Voice'),
+                  _FeaturePill(Icons.translate, 'Translate'),
+                  _FeaturePill(Icons.emoji_emotions_outlined, 'Emoji'),
+                ],
+              ),
+            ),
             Expanded(
               child: Container(
-                margin: const EdgeInsets.fromLTRB(12, 4, 12, 8),
+                margin: const EdgeInsets.fromLTRB(12, 7, 12, 8),
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF1E2024) : Colors.white,
-                  borderRadius: BorderRadius.circular(14),
+                  color: isDark ? const Color(0xFF1B2140) : Colors.white,
+                  borderRadius: BorderRadius.circular(18),
                   border: Border.all(color: t.border),
                 ),
                 child: Column(
@@ -278,24 +329,23 @@ class DemoEditorScreen extends StatelessWidget {
                     Row(
                       children: [
                         Icon(
-                          Icons.edit_note,
+                          Icons.chat_bubble_outline,
                           size: 16,
-                          color: t.keyTextSecondary,
+                          color: t.accent,
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          'Demo editor — type with the keyboard below',
+                          'Try the keyboard',
                           style: TextStyle(
-                            fontSize: 11,
-                            color: t.keyTextSecondary,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: t.keyText,
                           ),
                         ),
                         const Spacer(),
                         if (kb.editor.text.isNotEmpty)
                           InkWell(
-                            onTap: () {
-                              kb.editor.clear();
-                            },
+                            onTap: kb.editor.clear,
                             child: Text(
                               'Clear',
                               style: TextStyle(fontSize: 11, color: t.accent),
@@ -303,7 +353,30 @@ class DemoEditorScreen extends StatelessWidget {
                           ),
                       ],
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 10),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 9,
+                        ),
+                        decoration: BoxDecoration(
+                          color: t.accent.withValues(alpha: 0.09),
+                          borderRadius: const BorderRadius.only(
+                            topLeft: Radius.circular(4),
+                            topRight: Radius.circular(16),
+                            bottomRight: Radius.circular(16),
+                            bottomLeft: Radius.circular(16),
+                          ),
+                        ),
+                        child: Text(
+                          'Namaste! How are you? 😊',
+                          style: TextStyle(fontSize: 14, color: t.keyText),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
                     Expanded(
                       child: TextField(
                         controller: kb.editor,
@@ -314,13 +387,12 @@ class DemoEditorScreen extends StatelessWidget {
                         textAlignVertical: TextAlignVertical.top,
                         style: TextStyle(
                           fontSize: 17,
-                          height: 1.45,
+                          height: 1.4,
                           color: t.keyText,
                         ),
                         decoration: InputDecoration(
                           border: InputBorder.none,
-                          hintText:
-                              'नमस्ते! Try typing "namaste" in Hindi Roman mode…',
+                          hintText: 'Type in Hindi, Odia, Tamil…',
                           hintStyle: TextStyle(
                             fontSize: 15,
                             color: t.keyTextSecondary,
@@ -332,11 +404,59 @@ class DemoEditorScreen extends StatelessWidget {
                 ),
               ),
             ),
-            // The keyboard itself
             const KeyboardView(),
           ],
         ),
       ),
     );
   }
+}
+
+class _LanguageChip extends StatelessWidget {
+  final String label;
+  const _LanguageChip(this.label);
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+    decoration: BoxDecoration(
+      color: Colors.white.withValues(alpha: 0.16),
+      borderRadius: BorderRadius.circular(10),
+    ),
+    child: Text(
+      label,
+      style: const TextStyle(
+        fontSize: 10.5,
+        fontWeight: FontWeight.w600,
+        color: Colors.white,
+      ),
+    ),
+  );
+}
+
+class _FeaturePill extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  const _FeaturePill(this.icon, this.label);
+
+  @override
+  Widget build(BuildContext context) => Expanded(
+    child: Column(
+      children: [
+        Icon(icon, size: 18, color: const Color(0xFF163B8F)),
+        const SizedBox(height: 2),
+        Text(
+          label,
+          textAlign: TextAlign.center,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+            fontSize: 8.5,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF263A68),
+          ),
+        ),
+      ],
+    ),
+  );
 }

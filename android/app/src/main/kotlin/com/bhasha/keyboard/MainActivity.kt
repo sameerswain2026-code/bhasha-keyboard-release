@@ -1,4 +1,4 @@
-package com.bhashakeyboard.ime
+package com.bhasha.keyboard
 
 import android.Manifest
 import android.content.Context
