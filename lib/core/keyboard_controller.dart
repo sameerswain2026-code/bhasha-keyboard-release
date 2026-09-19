@@ -434,6 +434,10 @@ class KeyboardController extends ChangeNotifier {
     _translateSource = _draftSource;
     _translateTarget = _draftTarget;
     _translateOutputStyle = _draftStyle;
+    if (_translateOutputStyle == ScriptMode.native) {
+      _installedLanguagePacks.add(_translateTarget.id);
+      _persist('installedLanguagePacks', _installedLanguagePacks.toList());
+    }
     _nativePage = 0;
     _translateEverActivated = true;
     _persist('translateSource', _translateSource.id);
@@ -446,6 +450,10 @@ class KeyboardController extends ChangeNotifier {
 
   void setTranslateOutputStyle(ScriptMode style) {
     if (style == ScriptMode.native && !_translateTarget.supportsNative) return;
+    if (style == ScriptMode.native) {
+      _installedLanguagePacks.add(_translateTarget.id);
+      _persist('installedLanguagePacks', _installedLanguagePacks.toList());
+    }
     _translateOutputStyle = style;
     _draftStyle = style;
     _nativePage = 0;
@@ -1396,13 +1404,19 @@ class KeyboardController extends ChangeNotifier {
     _nativePage = 0;
     if (!pack.supportsNative) {
       _scriptMode = ScriptMode.roman;
-    } else if (!pack.supportsRoman) {
+    } else if (!pack.supportsRoman || !pack.isLatin) {
+      // Native is the useful default for an explicitly selected Indic
+      // language; Roman remains one tap away on the globe key.
+      _installedLanguagePacks.add(pack.id);
       _scriptMode = ScriptMode.native;
     }
     voice.setScriptMode(_scriptMode);
     voice.setTranslateTarget(_translateTarget);
     _persist('language', pack.id);
     _persist('scriptMode', _scriptMode.name);
+    if (!pack.isLatin) {
+      _persist('installedLanguagePacks', _installedLanguagePacks.toList());
+    }
     _updateSuggestions();
     notifyListeners();
   }
@@ -1721,12 +1735,12 @@ class KeyboardController extends ChangeNotifier {
   Future<String> _resolveVoiceText(String text) async {
     if (_micMode != MicMode.translate) return text;
     try {
-      // The offline provider has no semantic Indic-to-Indic dictionary and
-      // previously returned transliteration, which made Hindi↔Odia,
-      // Bengali↔Odia, etc. appear untranslated. Use the configured Gemini
-      // service for these pairs while retaining the fast offline path for
-      // English pairs.
-      if (!_translateSource.isLatin && !_translateTarget.isLatin &&
+      // Sarvam's translate mode returns English only. The old client then
+      // sent English -> Indic text through the offline dictionary, whose
+      // last-resort behavior is transliteration. That produced native-looking
+      // English words instead of semantic Hindi/Odia/etc. Use Gemini for every
+      // non-English target, including English -> Indic and Indic -> Indic.
+      if (!_translateTarget.isLatin &&
           _translateSource.id != _translateTarget.id) {
         return await _speechPolisher.translateText(
           text,
