@@ -62,6 +62,10 @@ abstract class SpeechProvider {
   /// [MicMode.translate]. When false, the caller must translate the
   /// returned (source-language) text to English itself as a fallback.
   bool get hasNativeTranslateMode;
+
+  /// Surface audio/network failures so the keyboard never remains stuck on
+  /// an indefinite "Listening…" state.
+  void setErrorHandler(void Function(String message)? handler);
 }
 
 /// Simulated provider used on web preview: emits progressive partial
@@ -81,6 +85,9 @@ class SimulatedSpeechProvider implements SpeechProvider {
 
   @override
   bool get hasNativeTranslateMode => false;
+
+  @override
+  void setErrorHandler(void Function(String message)? handler) {}
   int _wordIndex = 0;
   int _phraseIndex = 0;
 
@@ -159,7 +166,9 @@ class VoiceEngine extends ChangeNotifier {
   VoiceEngine({
     SpeechProvider? provider,
     this.silenceTimeout = defaultSilenceTimeout,
-  }) : _provider = provider ?? SimulatedSpeechProvider();
+  }) : _provider = provider ?? SimulatedSpeechProvider() {
+    _provider.setErrorHandler(_handleProviderError);
+  }
 
   /// The engine's original/default mic-silence auto-stop window - used
   /// as the restore value by callers that temporarily widen
@@ -314,6 +323,16 @@ class VoiceEngine extends ChangeNotifier {
         stopSession(reason: 'auto');
       }
     });
+  }
+
+  void _handleProviderError(String message) {
+    if (_cancelled || _state == VoiceState.idle) return;
+    _silenceTimer?.cancel();
+    _setState(
+      VoiceState.error,
+      message.trim().isEmpty ? 'Voice service unavailable' : message,
+    );
+    _scheduleErrorReset();
   }
 
   /// Manual or automatic clean stop. Never surfaces internal errors.

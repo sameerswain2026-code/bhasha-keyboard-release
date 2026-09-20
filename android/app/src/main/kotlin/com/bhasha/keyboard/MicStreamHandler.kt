@@ -37,8 +37,8 @@ class MicStreamHandler : EventChannel.StreamHandler {
     }
 
     @SuppressLint("MissingPermission")
-    fun startRecording() {
-        if (recording.get()) return
+    fun startRecording(): Boolean {
+        if (recording.get()) return true
         val minBuf = AudioRecord.getMinBufferSize(
             SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT
         )
@@ -53,14 +53,26 @@ class MicStreamHandler : EventChannel.StreamHandler {
             )
         } catch (e: Exception) {
             null
-        } ?: return
+        } ?: return false
         if (rec.state != AudioRecord.STATE_INITIALIZED) {
             rec.release()
-            return
+            return false
         }
         recorder = rec
         recording.set(true)
-        rec.startRecording()
+        try {
+            rec.startRecording()
+            if (rec.recordingState != AudioRecord.RECORDSTATE_RECORDING) {
+                stopRecording()
+                return false
+            }
+        } catch (_: SecurityException) {
+            stopRecording()
+            return false
+        } catch (_: IllegalStateException) {
+            stopRecording()
+            return false
+        }
         thread = Thread {
             val buffer = ByteArray(CHUNK_BYTES)
             while (recording.get()) {
@@ -74,6 +86,7 @@ class MicStreamHandler : EventChannel.StreamHandler {
             name = "bhasha-mic"
             start()
         }
+        return true
     }
 
     fun stopRecording() {

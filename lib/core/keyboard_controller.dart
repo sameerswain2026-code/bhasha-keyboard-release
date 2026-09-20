@@ -107,12 +107,12 @@ class KeyboardController extends ChangeNotifier {
       _micMode == MicMode.translate ? _translateTarget : _language;
   ScriptMode get keyboardScriptMode => _micMode == MicMode.translate
       ? (_translateOutputStyle == ScriptMode.native &&
-              !isLanguageInstalled(_translateTarget)
-          ? ScriptMode.roman
-          : _translateOutputStyle)
+                !isLanguageInstalled(_translateTarget)
+            ? ScriptMode.roman
+            : _translateOutputStyle)
       : (_scriptMode == ScriptMode.native && !isLanguageInstalled(_language)
-          ? ScriptMode.roman
-          : _scriptMode);
+            ? ScriptMode.roman
+            : _scriptMode);
   int get nativePageCount => keyboardLanguage.isLatin
       ? 1
       : nativeLayoutPagesFor(keyboardLanguage).length;
@@ -271,11 +271,21 @@ class KeyboardController extends ChangeNotifier {
   ThemeMode _themeMode = ThemeMode.system;
   ThemeMode get themeMode => _themeMode;
   static const themePalette = <Color>[
-    Color(0xFF1A73E8), Color(0xFF6750A4), Color(0xFF00695C),
-    Color(0xFF00838F), Color(0xFF1565C0), Color(0xFF2E7D32),
-    Color(0xFF558B2F), Color(0xFFEF6C00), Color(0xFFD84315),
-    Color(0xFFC62828), Color(0xFFAD1457), Color(0xFF6A1B9A),
-    Color(0xFF4527A0), Color(0xFF283593), Color(0xFF37474F),
+    Color(0xFF1A73E8),
+    Color(0xFF6750A4),
+    Color(0xFF00695C),
+    Color(0xFF00838F),
+    Color(0xFF1565C0),
+    Color(0xFF2E7D32),
+    Color(0xFF558B2F),
+    Color(0xFFEF6C00),
+    Color(0xFFD84315),
+    Color(0xFFC62828),
+    Color(0xFFAD1457),
+    Color(0xFF6A1B9A),
+    Color(0xFF4527A0),
+    Color(0xFF283593),
+    Color(0xFF37474F),
     Color(0xFF795548),
   ];
   int _themePaletteIndex = 0;
@@ -937,9 +947,12 @@ class KeyboardController extends ChangeNotifier {
     final isLetter =
         RegExp(r'[a-zA-Z]').hasMatch(text) ||
         (text.runes.length == 1 && text.runes.first > 0x0900);
+    final isContactCharacter =
+        RegExp(r'^[0-9@._+()\-]$').hasMatch(text) &&
+        !_composing.contains(RegExp(r'\s'));
 
     // Word separators commit the composing word first.
-    if (!isLetter) {
+    if (!isLetter && !isContactCharacter) {
       _commitComposing();
       _insertRaw(text);
       _updateSuggestions();
@@ -1015,6 +1028,7 @@ class KeyboardController extends ChangeNotifier {
       _replaceComposingInEditor(replacement);
     }
     suggestions.learn(_language.id, replacement);
+    _learnSpecialTokens(replacement);
     _persist(
       'learned_${_language.id}',
       suggestions.learnedWords(_language.id).take(200).toList(),
@@ -1027,6 +1041,33 @@ class KeyboardController extends ChangeNotifier {
     _lastCommittedWord = replacement;
     _composing = '';
     _suggestionList = [];
+  }
+
+  /// Learn reusable contact-style tokens as soon as the user commits them.
+  /// The normal word learner intentionally ignores punctuation, which meant
+  /// email addresses and phone numbers were never offered again. Keep this
+  /// small, privacy-preserving history local to the device and cap it through
+  /// the same learned-word persistence used by ordinary suggestions.
+  void _learnSpecialTokens(String text) {
+    final tokens = text
+        .split(RegExp(r'\s+'))
+        .map(
+          (token) =>
+              token.trim().replaceAll(RegExp(r'^[,;:!?]+|[,;:!?]+$'), ''),
+        )
+        .where((token) => token.isNotEmpty)
+        .where(
+          (token) => RegExp(
+            r'^(?:[^\s@]+@[^\s@]+\.[^\s@]+|\+?[0-9][0-9() .-]{6,}[0-9])$',
+          ).hasMatch(token),
+        );
+    for (final token in tokens) {
+      suggestions.learn(_language.id, token);
+    }
+    _persist(
+      'learned_${_language.id}',
+      suggestions.learnedWords(_language.id).take(200).toList(),
+    );
   }
 
   /// Last word committed (for next-word prediction learning/lookup).
@@ -1646,11 +1687,13 @@ class KeyboardController extends ChangeNotifier {
     }
     // Translate mode needs an async pivot-translation step.
     final translated = await _resolveVoiceText(text);
-    _appendVoiceText(await _polishVoiceText(
-      translated,
-      language: _translateTarget.englishName,
-      native: _translateOutputStyle == ScriptMode.native,
-    ));
+    _appendVoiceText(
+      await _polishVoiceText(
+        translated,
+        language: _translateTarget.englishName,
+        native: _translateOutputStyle == ScriptMode.native,
+      ),
+    );
   }
 
   Future<String> _polishVoiceText(
@@ -1659,11 +1702,13 @@ class KeyboardController extends ChangeNotifier {
     bool? native,
   }) {
     if (!_speechPolishingEnabled) return Future.value(text);
-    final selectedLanguage = language ??
+    final selectedLanguage =
+        language ??
         (micMode == MicMode.transcribe
             ? _transcribeLanguage.englishName
             : 'the detected language');
-    final selectedNative = native ??
+    final selectedNative =
+        native ??
         (micMode == MicMode.transcribe
             ? _transcribeStyle == ScriptMode.native
             : _autoMixStyle == ScriptMode.native);
@@ -1818,7 +1863,9 @@ class KeyboardController extends ChangeNotifier {
       _applyWritingTransform(writingAssistant.fixGrammar);
 
   Future<void> rewriteText({WritingTone tone = WritingTone.clear}) =>
-      _applyWritingTransform((text) => writingAssistant.rewrite(text, tone: tone));
+      _applyWritingTransform(
+        (text) => writingAssistant.rewrite(text, tone: tone),
+      );
 
   Future<void> suggestReply() =>
       _applyWritingTransform(writingAssistant.suggestReply);
@@ -1865,11 +1912,11 @@ class KeyboardController extends ChangeNotifier {
     final english = source.id == 'en'
         ? text
         : await _translationEngine.translate(
-              text,
-              source,
-              LanguageRegistry.byId('en'),
-            ) ??
-            text;
+                text,
+                source,
+                LanguageRegistry.byId('en'),
+              ) ??
+              text;
     final translated = target.id == 'en'
         ? english
         : await _translationEngine.translate(
@@ -2118,6 +2165,13 @@ class KeyboardController extends ChangeNotifier {
   // =====================================================================
 
   void _updateSuggestions() {
+    if (_composing.isEmpty) {
+      final contacts = suggestions.savedContactSuggestions(_language.id);
+      if (contacts.isNotEmpty) {
+        _suggestionList = contacts;
+        return;
+      }
+    }
     if (_composing.isEmpty && _lastCommittedWord.isNotEmpty) {
       // Nothing composing yet: show Gboard-style next-word predictions
       // based on the previously committed word.

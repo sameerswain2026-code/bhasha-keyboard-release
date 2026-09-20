@@ -44,6 +44,7 @@ class SarvamSpeechProvider implements SpeechProvider {
   StreamSubscription<List<int>>? _micSub;
   StreamSubscription<dynamic>? _wsSub;
   void Function(VoiceResult)? _onResult;
+  void Function(String message)? _onError;
   bool _running = false;
   int _reconnectAttempts = 0;
   static const int _maxReconnects = 6; // enough to try every key + retry
@@ -72,6 +73,11 @@ class SarvamSpeechProvider implements SpeechProvider {
 
   @override
   bool get hasNativeTranslateMode => true;
+
+  @override
+  void setErrorHandler(void Function(String message)? handler) {
+    _onError = handler;
+  }
 
   @override
   Future<bool> initialize(LanguagePack pack) async {
@@ -129,7 +135,10 @@ class SarvamSpeechProvider implements SpeechProvider {
 
     final uri =
         '$_wsBase'
-        '?language-code=${pack.sarvamCode}'
+        // Sarvam's current streaming API uses the underscore form. The old
+        // hyphenated key was silently ignored by the service, which left the
+        // keyboard in "Listening…" without receiving transcripts.
+        '?language_code=${pack.sarvamCode}'
         '&model=$_model'
         '&mode=$mode'
         '&sample_rate=$sampleRate'
@@ -175,7 +184,10 @@ class SarvamSpeechProvider implements SpeechProvider {
               'audio': {
                 'data': base64Encode(chunk),
                 'sample_rate': sampleRate,
-                'encoding': 'audio/wav',
+                // AudioRecord supplies raw PCM16 bytes (there is no WAV
+                // header), so the payload must match the PCM codec declared
+                // in the WebSocket query parameters.
+                'encoding': 'pcm_s16le',
               },
             }),
           );
@@ -184,6 +196,7 @@ class SarvamSpeechProvider implements SpeechProvider {
     } catch (_) {
       // Mic failure: end cleanly; engine surfaces "unavailable".
       _running = false;
+      _onError?.call('Microphone audio stream unavailable');
     }
   }
 
@@ -209,8 +222,9 @@ class SarvamSpeechProvider implements SpeechProvider {
       if (SarvamKeyPool.isKeyError(message: msg)) {
         _failoverAndRetry(key, message: msg);
       }
-      // Non-key errors (e.g. validation) are swallowed; the lifecycle
-      // engine's silence timeout will close the session cleanly.
+      if (!_running) {
+        _onError?.call(msg.isEmpty ? 'Speech service error' : msg);
+      }
     }
   }
 
@@ -230,6 +244,7 @@ class SarvamSpeechProvider implements SpeechProvider {
     _reconnectAttempts++;
     if (_reconnectAttempts > _maxReconnects) {
       _running = false;
+      _onError?.call('Speech service connection failed');
       return;
     }
     _teardownSocket();
@@ -245,6 +260,11 @@ class SarvamSpeechProvider implements SpeechProvider {
     _reconnectAttempts++;
     if (_reconnectAttempts > _maxReconnects) {
       _running = false;
+      _onError?.call(
+        message?.trim().isNotEmpty == true
+            ? message!.trim()
+            : 'Speech service unavailable',
+      );
       return;
     }
     _teardownSocket();

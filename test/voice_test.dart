@@ -45,6 +45,9 @@ class FakeSpeechProvider implements SpeechProvider {
   @override
   bool get hasNativeTranslateMode => false;
 
+  @override
+  void setErrorHandler(void Function(String message)? handler) {}
+
   void emitPartial(String text) => _onResult?.call(VoiceResult(text, false));
   void emitFinal(String text) => _onResult?.call(VoiceResult(text, true));
 }

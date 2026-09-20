@@ -220,8 +220,7 @@ class BhashaImeService : InputMethodService() {
                 "requestMicPermission" -> result.success(hasMic())
                 "startMic" -> {
                     if (hasMic()) {
-                        micStream?.startRecording()
-                        result.success(true)
+                        result.success(micStream?.startRecording() == true)
                     } else {
                         result.success(false)
                     }

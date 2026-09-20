@@ -68,8 +68,7 @@ class MainActivity : FlutterActivity() {
                 }
                 "startMic" -> {
                     if (hasMic()) {
-                        micStream?.startRecording()
-                        result.success(true)
+                        result.success(micStream?.startRecording() == true)
                     } else {
                         result.success(false)
                     }

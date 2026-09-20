@@ -25,13 +25,18 @@ class AndroidMicSource implements MicAudioSource {
 
   @override
   Future<Stream<List<int>>> start() async {
+    // Create the broadcast stream before starting AudioRecord. Starting the
+    // native recorder first can drop the first chunks while EventChannel is
+    // still attaching its listener, which was especially visible as a
+    // permanently idle "Listening…" session on the IME.
+    final stream = _mic.receiveBroadcastStream().map(
+      (event) => (event as List).cast<int>(),
+    );
     final ok = await _system.invokeMethod<bool>('startMic');
     if (ok != true) {
       throw StateError('Microphone unavailable');
     }
-    return _mic.receiveBroadcastStream().map(
-      (event) => (event as List).cast<int>(),
-    );
+    return stream;
   }
 
   @override

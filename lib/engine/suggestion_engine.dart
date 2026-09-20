@@ -483,6 +483,17 @@ class SuggestionEngine {
     (_learned[languageId] ??= <String>{}).addAll(words);
   }
 
+  /// Recently learned contact-style entries (email addresses and phone
+  /// numbers). These are intentionally local and are offered even before the
+  /// user starts typing, so a frequently used address/number takes one tap.
+  List<String> savedContactSuggestions(String languageId, {int limit = 3}) {
+    final values = _learned[languageId] ?? const <String>{};
+    final contactPattern = RegExp(
+      r'^(?:[^\s@]+@[^\s@]+\.[^\s@]+|\+?[0-9][0-9() .-]{6,}[0-9])$',
+    );
+    return values.where(contactPattern.hasMatch).take(limit).toList();
+  }
+
   /// Get suggestions for current composing text.
   /// [mode] determines if roman input should be transliterated.
   List<String> suggest(
