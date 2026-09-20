@@ -456,25 +456,33 @@ class _FeaturePill extends StatelessWidget {
   Widget build(BuildContext context) => Expanded(
     child: InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(10),
+      borderRadius: BorderRadius.circular(12),
+      splashColor: const Color(0x332B63D9),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 4),
-        child: Column(
-          children: [
-            Icon(icon, size: 18, color: const Color(0xFF163B8F)),
-            const SizedBox(height: 2),
-            Text(
-              label,
-              textAlign: TextAlign.center,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontSize: 8.5,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF263A68),
+        child: TweenAnimationBuilder<double>(
+          tween: Tween(begin: 0.92, end: 1),
+          duration: const Duration(milliseconds: 420),
+          curve: Curves.easeOutBack,
+          builder: (context, scale, child) =>
+              Transform.scale(scale: scale, child: child),
+          child: Column(
+            children: [
+              Icon(icon, size: 18, color: const Color(0xFF163B8F)),
+              const SizedBox(height: 2),
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 8.5,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF263A68),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     ),

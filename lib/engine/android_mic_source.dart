@@ -2,8 +2,9 @@
 /// native AudioRecord (VOICE_RECOGNITION source) over an EventChannel.
 library;
 
-import 'package:flutter/services.dart';
 import 'dart:async';
+
+import 'package:flutter/services.dart';
 
 import 'mic_source.dart';
 
@@ -29,15 +30,22 @@ class AndroidMicSource implements MicAudioSource {
   @override
   Future<Stream<List<int>>> start() async {
     if (_controller != null) return _controller!.stream;
-    // Keep a listener and a small buffer alive before AudioRecord starts;
-    // short utterances must not lose their first PCM chunks on the IME.
+
+    // Install the native EventChannel listener before starting AudioRecord.
+    // The controller buffers the short interval before Sarvam subscribes to
+    // the returned stream, so the first spoken syllable is not lost.
     final controller = StreamController<List<int>>();
     _controller = controller;
     _nativeSubscription = _mic.receiveBroadcastStream().listen(
-      (event) => controller.add((event as List).cast<int>()),
+      (event) {
+        if (!controller.isClosed) controller.add((event as List).cast<int>());
+      },
       onError: controller.addError,
-      onDone: controller.close,
+      onDone: () {
+        if (!controller.isClosed) controller.close();
+      },
     );
+
     final ok = await _system.invokeMethod<bool>('startMic');
     if (ok != true) {
       await _nativeSubscription?.cancel();
@@ -51,12 +59,12 @@ class AndroidMicSource implements MicAudioSource {
 
   @override
   Future<void> stop() async {
-    try {
-      await _system.invokeMethod('stopMic');
-    } catch (_) {}
     await _nativeSubscription?.cancel();
     _nativeSubscription = null;
     await _controller?.close();
     _controller = null;
+    try {
+      await _system.invokeMethod('stopMic');
+    } catch (_) {}
   }
 }

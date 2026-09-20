@@ -642,21 +642,25 @@ class _DynamicStatusOrSuggestions extends StatelessWidget {
         ],
       );
     } else if (voice.state == VoiceState.error) {
-      child = Row(
+      child = InkWell(
         key: const ValueKey('voice-error'),
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.info_outline, size: 15, color: Colors.orange),
-          const SizedBox(width: 6),
-          Flexible(
-            child: Text(
-              voice.statusMessage,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontSize: 12, color: t.suggestionText),
+        onTap: kb.toggleVoice,
+        borderRadius: BorderRadius.circular(8),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.refresh, size: 15, color: Colors.orange),
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(
+                voice.statusMessage,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontSize: 12, color: t.suggestionText),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       );
     } else if (kb.justCopiedText != null) {
       // Gboard-style "Copied" confirmation: flashes right where the
@@ -822,8 +826,8 @@ class _AlphaLayer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final layoutLanguage = kb.keyboardLanguage;
-    final nativePages = kb.keyboardScriptMode == ScriptMode.native &&
-            !layoutLanguage.isLatin
+    final nativePages =
+        kb.keyboardScriptMode == ScriptMode.native && !layoutLanguage.isLatin
         ? nativeLayoutPagesFor(layoutLanguage)
         : const <LayoutRows>[];
     final layout = nativePages.isNotEmpty
@@ -1092,7 +1096,8 @@ class _BottomRow extends StatelessWidget {
           },
           onLongPressStart: () => kb.togglePanel(ActivePanel.language),
         ),
-        if (kb.keyboardScriptMode == ScriptMode.native && !layoutLanguage.isLatin)
+        if (kb.keyboardScriptMode == ScriptMode.native &&
+            !layoutLanguage.isLatin)
           KeyWidget(
             label: '${kb.nativePage + 1}/${kb.nativePageCount}',
             special: true,

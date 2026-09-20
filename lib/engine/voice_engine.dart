@@ -328,10 +328,16 @@ class VoiceEngine extends ChangeNotifier {
   void _handleProviderError(String message) {
     if (_cancelled || _state == VoiceState.idle) return;
     _silenceTimer?.cancel();
-    _setState(
-      VoiceState.error,
-      message.trim().isEmpty ? 'Voice service unavailable' : message,
-    );
+    final lower = message.toLowerCase();
+    final friendly =
+        lower.contains('websocket') ||
+            lower.contains('connection') ||
+            lower.contains('socket')
+        ? 'Voice connection failed · Tap mic to retry'
+        : message.trim().isEmpty
+        ? 'Voice service unavailable · Tap mic to retry'
+        : message;
+    _setState(VoiceState.error, friendly);
     _scheduleErrorReset();
   }
 

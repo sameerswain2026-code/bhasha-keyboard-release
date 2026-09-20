@@ -40,6 +40,17 @@ const Map<String, String> kNativeCharacterSets = {
       'ا آ ب ٻ ڀ پ ت ٽ ٺ ث ج ڄ ڃ چ ڇ ح خ د ڊ ڌ ڏ ذ ر ڙ ز ژ س ش ص ض ط ظ ع غ ف ق ڪ ک گ ڳ ل م ن ڻ و ه ھ ء ي ئ َ ُ ِ ْ ّ ۔ ۰۱۲۳۴۵۶۷۸۹',
   'sat': 'ᱚᱛᱜᱝᱞᱟᱠᱡᱢᱣᱤᱥᱦᱧᱨᱩᱪᱫᱬᱭᱮᱯᱰᱱᱲᱳᱴᱵᱶᱷᱸᱹᱺᱻᱼᱽ',
   'mni': 'ꯀꯁꯂꯃꯄꯅꯆꯇꯈꯉꯊꯋꯌꯍꯎꯏꯐꯑꯒꯓꯔꯕꯖꯗꯘꯙꯚꯛꯜꯝꯞꯟꯠꯡꯢꯣꯤꯥꯦꯧꯨꯩꯪ꯫',
+  // These four languages use the Devanagari native keyboard family. They
+  // were previously routed through a generic fallback, so their page count
+  // and key order did not match the other native packs.
+  'mai':
+      'अआइईउऊऋएऐओऔअंअःकखगघङचछजझञटठडढणतथदधनपफबभमयरलवशषसहळक्षत्रज्ञ़ँंः्ािीुूृेैोौॅॉॐ०१२३४५६७८९',
+  'kok':
+      'अआइईउऊऋएऐओऔअंअःकखगघङचछजझञटठडढणतथदधनपफबभमयरलवशषसहळक्षत्रज्ञ़ँंः्ािीुूृेैोौॅॉॐ०१२३४५६७८९',
+  'doi':
+      'अआइईउऊऋएऐओऔअंअःकखगघङचछजझञटठडढणतथदधनपफबभमयरलवशषसहळक्षत्रज्ञ़ँंः्ािीुूृेैोौॅॉॐ०१२३४५६७८९',
+  'brx':
+      'अआइईउऊऋएऐओऔअंअःकखगघङचछजझञटठडढणतथदधनपफबभमयरलवशषसहळक्षत्रज्ञ़ँंः्ािीुूृेैोौॅॉॐ०१२३४५६७८९',
 };
 
 String _nativeCharactersFor(LanguagePack pack) {

@@ -1,6 +1,6 @@
 /// Sarvam AI real-time streaming speech provider.
 ///
-/// Connects to Sarvam's Speech-to-Text WebSocket (saaras:v3) and streams
+/// Connects to Sarvam's realtime Speech-to-Text WebSocket (saaras:v3-realtime) and streams
 /// microphone PCM audio for near-instant transcription in all 22 Indian
 /// languages + English. Output script follows the keyboard's selected
 /// ScriptMode: `transcribe` mode returns native script, `translit` mode
@@ -33,8 +33,9 @@ class SarvamSpeechProvider implements SpeechProvider {
   final SarvamKeyPool _pool;
   final int sampleRate;
 
-  static const String _wsBase = 'wss://api.sarvam.ai/speech-to-text/ws';
-  static const String _model = 'saaras:v3';
+  static const String _wsBase =
+      'wss://api.sarvam.ai/speech-to-text-realtime/ws';
+  static const String _model = 'saaras:v3-realtime';
 
   LanguagePack? _pack;
   ScriptMode _scriptMode = ScriptMode.native;
@@ -149,7 +150,7 @@ class SarvamSpeechProvider implements SpeechProvider {
         '&model=$_model'
         '&mode=$mode'
         '&sample_rate=$sampleRate'
-        '&input_audio_codec=pcm_s16le'
+        '&encoding=linear16'
         '&high_vad_sensitivity=true'
         '&vad_signals=false'
         '&flush_signal=true';
@@ -186,17 +187,11 @@ class SarvamSpeechProvider implements SpeechProvider {
         final sock = _ws;
         if (sock == null || sock.readyState != WebSocket.open) return;
         try {
+          // Realtime API expects a flat event + base64 payload. The previous
+          // legacy nested {audio:{data,...}} envelope is rejected by the
+          // realtime endpoint and surfaced as WebSocketException in the UI.
           sock.add(
-            jsonEncode({
-              'audio': {
-                'data': base64Encode(chunk),
-                'sample_rate': sampleRate,
-                // AudioRecord supplies raw PCM16 bytes (there is no WAV
-                // header), so the payload must match the PCM codec declared
-                // in the WebSocket query parameters.
-                'encoding': 'pcm_s16le',
-              },
-            }),
+            jsonEncode({'event': 'audio_input', 'audio': base64Encode(chunk)}),
           );
         } catch (_) {}
       });
@@ -215,22 +210,22 @@ class SarvamSpeechProvider implements SpeechProvider {
     } catch (_) {
       return;
     }
-    final type = parsed['type'] as String?;
-    if (type == 'data') {
-      final data = parsed['data'] as Map<String, dynamic>?;
-      final transcript = (data?['transcript'] as String?)?.trim() ?? '';
+    final event = parsed['event'] as String?;
+    if (event == 'transcript.partial' || event == 'transcript.final') {
+      final transcript = (parsed['text'] as String?)?.trim() ?? '';
       if (transcript.isNotEmpty) {
-        // Server emits finalized utterance segments.
-        _onResult?.call(VoiceResult(transcript, true));
+        _onResult?.call(VoiceResult(transcript, event == 'transcript.final'));
       }
-    } else if (type == 'error') {
-      final data = parsed['data'] as Map<String, dynamic>?;
-      final msg = data?['message'] as String? ?? '';
-      if (SarvamKeyPool.isKeyError(message: msg)) {
-        _failoverAndRetry(key, message: msg);
-      }
-      if (!_running) {
-        _onError?.call(msg.isEmpty ? 'Speech service error' : msg);
+    } else if (event == 'error') {
+      final msg = parsed['message'] as String? ?? '';
+      final statusCode = parsed['status_code'] as int?;
+      if (SarvamKeyPool.isKeyError(message: msg, closeCode: statusCode)) {
+        _failoverAndRetry(key, message: msg, closeCode: statusCode);
+      } else if (parsed['is_fatal'] == true) {
+        _running = false;
+        _onError?.call(
+          msg.isEmpty ? 'Speech service rejected the session' : msg,
+        );
       }
     }
   }
@@ -295,7 +290,7 @@ class SarvamSpeechProvider implements SpeechProvider {
     final sock = _ws;
     if (sock != null && sock.readyState == WebSocket.open) {
       try {
-        sock.add(jsonEncode({'type': 'flush'}));
+        sock.add(jsonEncode({'event': 'flush'}));
         // Give the server a brief window to emit the final transcript.
         await Future<void>.delayed(const Duration(milliseconds: 600));
       } catch (_) {}
