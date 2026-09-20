@@ -91,12 +91,17 @@ class MicStreamHandler : EventChannel.StreamHandler {
 
     fun stopRecording() {
         if (!recording.getAndSet(false)) return
-        thread?.join(300)
-        thread = null
+        // Unblock AudioRecord.read() before waiting for the worker thread.
+        // Joining first can leave the recorder blocked and break the next
+        // voice session on the same IME process.
         recorder?.let {
             try {
                 it.stop()
             } catch (_: Exception) {}
+        }
+        thread?.join(300)
+        thread = null
+        recorder?.let {
             it.release()
         }
         recorder = null

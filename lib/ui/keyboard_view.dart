@@ -1115,7 +1115,11 @@ class _BottomRow extends StatelessWidget {
           },
         ),
         KeyWidget(
-          label: '  ',
+          // Make the language-switch affordance discoverable. Holding this
+          // key opens the language selector, matching the requested Gboard
+          // interaction while keeping a normal tap as Space.
+          label: 'English',
+          fontSize: 13,
           flex: 8,
           heightScale: scale,
           onTap: () async {

@@ -65,7 +65,7 @@ class _KeyWidgetState extends State<KeyWidget> {
       child: Padding(
         // Tighter gutters make each key body and hit target larger without
         // changing the fixed keyboard width.
-        padding: const EdgeInsets.all(1.5),
+        padding: const EdgeInsets.all(1),
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
           onTapDown: (_) {
@@ -98,7 +98,7 @@ class _KeyWidgetState extends State<KeyWidget> {
                   widget.onLongPressEnd!.call();
                 },
           child: AnimatedContainer(
-            duration: const Duration(milliseconds: 60),
+            duration: const Duration(milliseconds: 35),
             // Base height raised from 46 -> 55: the standalone language
             // sub-bar row beneath the toolbar was removed (spec item 2),
             // and that reclaimed vertical space is redistributed into
