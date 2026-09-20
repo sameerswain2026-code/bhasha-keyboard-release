@@ -3,6 +3,9 @@
 library;
 
 import 'dart:async';
+import 'dart:convert';
+
+import 'package:http/http.dart' as http;
 
 import '../data/languages.dart';
 import 'transliterator.dart';
@@ -273,11 +276,72 @@ class OfflineTranslationProvider implements TranslationProvider {
     }
     return null;
   }
+
+  bool hasExactPhrase(String text, LanguagePack from, LanguagePack to) {
+    final q = text.trim().toLowerCase();
+    if (q.isEmpty) return false;
+    if (from.id == 'en' && _enTo[to.id]?.containsKey(q) == true) return true;
+    if (to.id == 'en' && _enTo[from.id]?.containsValue(text.trim()) == true) {
+      return true;
+    }
+    return false;
+  }
+}
+
+/// Fast network translation fallback for arbitrary source/target pairs.
+/// The offline dictionary remains first-class for common phrases and tests;
+/// this endpoint fills the previous gap where Indic-to-Indic translation was
+/// only transliteration. If the network is unavailable, the deterministic
+/// offline result is still returned instead of failing the keyboard action.
+class HybridTranslationProvider implements TranslationProvider {
+  HybridTranslationProvider({http.Client? client})
+    : _client = client ?? http.Client();
+
+  final http.Client _client;
+  final OfflineTranslationProvider _offline = OfflineTranslationProvider();
+
+  @override
+  Future<String?> translate(
+    String text,
+    LanguagePack from,
+    LanguagePack to,
+  ) async {
+    if (text.trim().isEmpty) return null;
+    if (_offline.hasExactPhrase(text, from, to)) {
+      return _offline.translate(text, from, to);
+    }
+    try {
+      final uri = Uri.https('translate.googleapis.com', '/translate_a/single', {
+        'client': 'gtx',
+        'sl': _googleCode(from),
+        'tl': _googleCode(to),
+        'dt': 't',
+        'q': text.trim(),
+      });
+      final response = await _client
+          .get(uri)
+          .timeout(const Duration(seconds: 2));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data is List && data.isNotEmpty && data[0] is List) {
+          final result = (data[0] as List)
+              .whereType<List>()
+              .map((part) => part.isNotEmpty ? part[0].toString() : '')
+              .join()
+              .trim();
+          if (result.isNotEmpty) return result;
+        }
+      }
+    } catch (_) {}
+    return _offline.translate(text, from, to);
+  }
+
+  String _googleCode(LanguagePack pack) => pack.locale.split('-').first;
 }
 
 class TranslationEngine {
   TranslationEngine({TranslationProvider? provider})
-    : _provider = provider ?? OfflineTranslationProvider();
+    : _provider = provider ?? HybridTranslationProvider();
 
   final TranslationProvider _provider;
 

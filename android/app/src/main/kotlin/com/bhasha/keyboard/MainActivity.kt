@@ -23,6 +23,7 @@ import io.flutter.plugin.common.MethodChannel
 class MainActivity : FlutterActivity() {
 
     private var micStream: MicStreamHandler? = null
+    private var speechStream: SpeechStreamHandler? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -85,6 +86,28 @@ class MainActivity : FlutterActivity() {
         EventChannel(
             flutterEngine.dartExecutor.binaryMessenger, "bhasha/mic"
         ).setStreamHandler(micStream)
+
+        speechStream = SpeechStreamHandler(this)
+        MethodChannel(
+            flutterEngine.dartExecutor.binaryMessenger, "bhasha/speech"
+        ).setMethodCallHandler { call, result ->
+            when (call.method) {
+                "hasMicPermission" -> result.success(hasMic())
+                "startSpeech" -> result.success(
+                    if (hasMic()) speechStream?.startSpeech(
+                        call.argument<String>("locale") ?: "en-IN"
+                    ) == true else false
+                )
+                "stopSpeech" -> {
+                    speechStream?.stopSpeech()
+                    result.success(true)
+                }
+                else -> result.notImplemented()
+            }
+        }
+        EventChannel(
+            flutterEngine.dartExecutor.binaryMessenger, "bhasha/speech_results"
+        ).setStreamHandler(speechStream)
     }
 
     private fun hasMic(): Boolean =
@@ -93,6 +116,7 @@ class MainActivity : FlutterActivity() {
 
     override fun onDestroy() {
         micStream?.stopRecording()
+        speechStream?.stopSpeech()
         super.onDestroy()
     }
 }

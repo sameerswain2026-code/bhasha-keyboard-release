@@ -96,6 +96,13 @@ class SarvamSpeechProvider implements SpeechProvider {
     _onResult = onResult;
     if (_running) return; // continuous session: socket already streaming
     _running = true;
+    if (!_pool.hasUsableKey) {
+      // APKs distributed without private credentials must never wait for an
+      // 8-second WebSocket timeout. ResilientSpeechProvider immediately
+      // switches to Android SpeechRecognizer after this signal.
+      _onError?.call('Sarvam credentials unavailable');
+      return;
+    }
     _connectAndStream();
   }
 

@@ -306,11 +306,23 @@ class DemoEditorScreen extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
               child: Row(
-                children: const [
-                  _FeaturePill(Icons.language, '22 Languages'),
-                  _FeaturePill(Icons.mic_none, 'Voice'),
-                  _FeaturePill(Icons.translate, 'Translate'),
-                  _FeaturePill(Icons.emoji_emotions_outlined, 'Emoji'),
+                children: [
+                  _FeaturePill(
+                    Icons.language,
+                    '22 Languages',
+                    onTap: () => kb.togglePanel(ActivePanel.language),
+                  ),
+                  _FeaturePill(Icons.mic_none, 'Voice', onTap: kb.toggleVoice),
+                  _FeaturePill(
+                    Icons.translate,
+                    'Translate',
+                    onTap: kb.openTranslateConfig,
+                  ),
+                  _FeaturePill(
+                    Icons.emoji_emotions_outlined,
+                    'Emoji',
+                    onTap: () => kb.togglePanel(ActivePanel.emoji),
+                  ),
                 ],
               ),
             ),
@@ -437,26 +449,34 @@ class _LanguageChip extends StatelessWidget {
 class _FeaturePill extends StatelessWidget {
   final IconData icon;
   final String label;
-  const _FeaturePill(this.icon, this.label);
+  final VoidCallback onTap;
+  const _FeaturePill(this.icon, this.label, {required this.onTap});
 
   @override
   Widget build(BuildContext context) => Expanded(
-    child: Column(
-      children: [
-        Icon(icon, size: 18, color: const Color(0xFF163B8F)),
-        const SizedBox(height: 2),
-        Text(
-          label,
-          textAlign: TextAlign.center,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
-            fontSize: 8.5,
-            fontWeight: FontWeight.w700,
-            color: Color(0xFF263A68),
-          ),
+    child: InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Column(
+          children: [
+            Icon(icon, size: 18, color: const Color(0xFF163B8F)),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 8.5,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF263A68),
+              ),
+            ),
+          ],
         ),
-      ],
+      ),
     ),
   );
 }

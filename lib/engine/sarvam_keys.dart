@@ -3,8 +3,8 @@ library;
 
 class SarvamKeyPool {
   SarvamKeyPool(List<String> keys)
-      : _keys = keys.isEmpty ? const [''] : List.unmodifiable(keys),
-        _failed = <int>{};
+    : _keys = keys.isEmpty ? const [''] : List.unmodifiable(keys),
+      _failed = <int>{};
 
   final List<String> _keys;
   final Set<int> _failed;
@@ -21,6 +21,7 @@ class SarvamKeyPool {
   }
 
   int get length => _keys.length;
+  bool get hasUsableKey => _keys.any((key) => key.isNotEmpty);
   int get healthyCount => _keys.length - _failed.length;
   String get current => _keys[_index];
 
@@ -46,12 +47,18 @@ class SarvamKeyPool {
   }
 
   static bool isKeyError({int? httpStatus, int? closeCode, String? message}) {
-    if (httpStatus == 401 || httpStatus == 402 || httpStatus == 403 ||
-        httpStatus == 429) return true;
+    if (httpStatus == 401 ||
+        httpStatus == 402 ||
+        httpStatus == 403 ||
+        httpStatus == 429)
+      return true;
     if (closeCode == 4001 || closeCode == 4429) return true;
     final text = (message ?? '').toLowerCase();
-    return text.contains('invalid') && (text.contains('key') || text.contains('authentication')) ||
-        text.contains('rate limit') || text.contains('insufficient credits') ||
-        text.contains('quota') || text.contains('subscription expired');
+    return text.contains('invalid') &&
+            (text.contains('key') || text.contains('authentication')) ||
+        text.contains('rate limit') ||
+        text.contains('insufficient credits') ||
+        text.contains('quota') ||
+        text.contains('subscription expired');
   }
 }

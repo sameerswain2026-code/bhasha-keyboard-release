@@ -13,25 +13,38 @@ class LayoutRows {
 /// old block scan produced blank/missing-looking keys) and follows the
 /// alphabet-first, signs-after layout used by Indic keyboards.
 const Map<String, String> kNativeCharacterSets = {
-  'hi': 'अआइईउऊऋएऐओऔअंअःकखगघङचछजझञटठडढणतथदधनपफबभमयरलवशषसहळक्षत्रज्ञ़ँंः्ािीुूृेैोौॅॉॐ०१२३४५६७८९',
-  'bn': 'অআইঈউঊঋএঐওঔঅংঅঃকখগঘঙচছজঝঞটঠডঢণতথদধনপফবভমযরলশষসহড়ঢ়য়ক্ষজ্ঞ়ঁংঃ্ািীুূৃেৈোৌৗৠ০১২৩৪৫৬৭৮৯',
-  'as': 'অআইঈউঊঋএঐওঔঅংঅঃকখগঘঙচছজঝঞটঠডঢণতথদধনপফবভমযৰলশষসহড়ঢ়ৱক্ষজ্ঞ়ঁংঃ্ািীুূৃেৈোৌৗ০১২৩৪৫৬৭৮৯',
-  'or': 'ଅଆଇଈଉଊଋଏଐଓଔଅଂଅଃକଖଗଘଙଚଛଜଝଞଟଠଡଢଣତଥଦଧନପଫବଭମଯରଲୱଶଷସହଳକ୍ଷଜ୍ଞଡ଼ଢ଼ୟ୍ାିୀୁୂୃେୈୋୌଁଂଃ୦୧୨୩୪୫୬୭୮୯',
+  'hi':
+      'अआइईउऊऋएऐओऔअंअःकखगघङचछजझञटठडढणतथदधनपफबभमयरलवशषसहळक्षत्रज्ञ़ँंः्ािीुूृेैोौॅॉॐ०१२३४५६७८९',
+  'bn':
+      'অআইঈউঊঋএঐওঔঅংঅঃকখগঘঙচছজঝঞটঠডঢণতথদধনপফবভমযরলশষসহড়ঢ়য়ক্ষজ্ঞ়ঁংঃ্ািীুূৃেৈোৌৗৠ০১২৩৪৫৬৭৮৯',
+  'as':
+      'অআইঈউঊঋএঐওঔঅংঅঃকখগঘঙচছজঝঞটঠডঢণতথদধনপফবভমযৰলশষসহড়ঢ়ৱক্ষজ্ঞ়ঁংঃ্ািীুূৃেৈোৌৗ০১২৩৪৫৬৭৮৯',
+  'or':
+      'ଅଆଇଈଉଊଋଏଐଓଔଅଂଅଃକଖଗଘଙଚଛଜଝଞଟଠଡଢଣତଥଦଧନପଫବଭମଯରଲୱଶଷସହଳକ୍ଷଜ୍ଞଡ଼ଢ଼ୟ୍ାିୀୁୂୃେୈୋୌଁଂଃ୦୧୨୩୪୫୬୭୮୯',
   'ta': 'அஆஇஈஉஊஎஏஐஒஓஔஃகஙசஞடணதநபமயரலவழளறனஜஷஸஹக்ஷ்ாிீுூெேைொோௌ௧௨௩௪௫௬௭௮௯',
-  'te': 'అఆఇఈఉఊఋౠఎఏఐఒఓఔఅంఅఃకఖగఘఙచఛజఝఞటఠడఢణతథదధనపఫబభమయరలవశషసహళక్షజ్ఞఱ్ంః్ాిీుూృౄెేైొోౌ౧౨౩౪౫౬౭౮౯',
-  'kn': 'ಅಆಇಈಉಊಋೠಎಏಐಒಓಔಅಂಅಃಕಖಗಘಙಚಛಜಝಞಟಠಡಢಣತಥದಧನಪಫಬಭಮಯರಲವಶಷಸಹಳಕ್ಷಜ್ಞಱಂಃ್ಾಿೀುೂೃೄೆೇೈೊೋೌ೦೧೨೩೪೫೬೭೮೯',
-  'ml': 'അആഇഈഉഊഋൠഎഏഐഒഓഔഅംഅഃകഖഗഘങചഛജഝഞടഠഡഢണതഥദധനപഫബഭമയരലവശഷസഹളഴറനക്ഷജ്ഞ്ാിീുൂൃെേൈൊോൌംഃ൦൧൨൩൪൫൬൭൮൯',
-  'gu': 'અઆઇઈઉઊઋએઐઓઔઅંઅઃકખગઘઙચછજઝઞટઠડઢણતથદધનપફબભમયરલવશષસહળક્ષજ્ઞૅૉ્ાિીુૂૃેૈોૌંઃ૦૧૨૩૪૫૬૭૮૯',
-  'pa': 'ਅਆਇਈਉਊਏਐਓਔਅੰਅਃਕਖਗਘਙਚਛਜਝਞਟਠਡਢਣਤਥਦਧਨਪਫਬਭਮਯਰਲਵਸ਼ਸਹੜਖ਼ਗ਼ਜ਼ਫ਼ਸ਼੍ਾਂਿੀੁੂੇੈੋੌੰਃ੦੧੨੩੪੫੬੭੮੯',
-  'ur': 'ا ب پ ت ٹ ث ج چ ح خ د ڈ ذ ر ڑ ز ژ س ش ص ض ط ظ ع غ ف ق ک گ ل م ن ں و ہ ھ ء ی ے آ ئ ۓ ُ َ ِ ْ ّ ۔ ۰۱۲۳۴۵۶۷۸۹',
-  'ks': 'ا آ ب پ ت ٹ ث ج چ ح خ د ڈ ذ ر ڑ ز ژ س ش ص ض ط ظ ع غ ف ق ک گ ل م ن ں و ہ ھ ء ی ے ٲ ٳ ۂ ۃ َ ُ ِ ْ ّ ۔ ۰۱۲۳۴۵۶۷۸۹',
-  'sd': 'ا آ ب ٻ ڀ پ ت ٽ ٺ ث ج ڄ ڃ چ ڇ ح خ د ڊ ڌ ڏ ذ ر ڙ ز ژ س ش ص ض ط ظ ع غ ف ق ڪ ک گ ڳ ل م ن ڻ و ه ھ ء ي ئ َ ُ ِ ْ ّ ۔ ۰۱۲۳۴۵۶۷۸۹',
+  'te':
+      'అఆఇఈఉఊఋౠఎఏఐఒఓఔఅంఅఃకఖగఘఙచఛజఝఞటఠడఢణతథదధనపఫబభమయరలవశషసహళక్షజ్ఞఱ్ంః్ాిీుూృౄెేైొోౌ౧౨౩౪౫౬౭౮౯',
+  'kn':
+      'ಅಆಇಈಉಊಋೠಎಏಐಒಓಔಅಂಅಃಕಖಗಘಙಚಛಜಝಞಟಠಡಢಣತಥದಧನಪಫಬಭಮಯರಲವಶಷಸಹಳಕ್ಷಜ್ಞಱಂಃ್ಾಿೀುೂೃೄೆೇೈೊೋೌ೦೧೨೩೪೫೬೭೮೯',
+  'ml':
+      'അആഇഈഉഊഋൠഎഏഐഒഓഔഅംഅഃകഖഗഘങചഛജഝഞടഠഡഢണതഥദധനപഫബഭമയരലവശഷസഹളഴറനക്ഷജ്ഞ്ാിീുൂൃെേൈൊോൌംഃ൦൧൨൩൪൫൬൭൮൯',
+  'gu':
+      'અઆઇઈઉઊઋએઐઓઔઅંઅઃકખગઘઙચછજઝઞટઠડઢણતથદધનપફબભમયરલવશષસહળક્ષજ્ઞૅૉ્ાિીુૂૃેૈોૌંઃ૦૧૨૩૪૫૬૭૮૯',
+  'pa':
+      'ਅਆਇਈਉਊਏਐਓਔਅੰਅਃਕਖਗਘਙਚਛਜਝਞਟਠਡਢਣਤਥਦਧਨਪਫਬਭਮਯਰਲਵਸ਼ਸਹੜਖ਼ਗ਼ਜ਼ਫ਼ਸ਼੍ਾਂਿੀੁੂੇੈੋੌੰਃ੦੧੨੩੪੫੬੭੮੯',
+  'ur':
+      'ا ب پ ت ٹ ث ج چ ح خ د ڈ ذ ر ڑ ز ژ س ش ص ض ط ظ ع غ ف ق ک گ ل م ن ں و ہ ھ ء ی ے آ ئ ۓ ُ َ ِ ْ ّ ۔ ۰۱۲۳۴۵۶۷۸۹',
+  'ks':
+      'ا آ ب پ ت ٹ ث ج چ ح خ د ڈ ذ ر ڑ ز ژ س ش ص ض ط ظ ع غ ف ق ک گ ل م ن ں و ہ ھ ء ی ے ٲ ٳ ۂ ۃ َ ُ ِ ْ ّ ۔ ۰۱۲۳۴۵۶۷۸۹',
+  'sd':
+      'ا آ ب ٻ ڀ پ ت ٽ ٺ ث ج ڄ ڃ چ ڇ ح خ د ڊ ڌ ڏ ذ ر ڙ ز ژ س ش ص ض ط ظ ع غ ف ق ڪ ک گ ڳ ل م ن ڻ و ه ھ ء ي ئ َ ُ ِ ْ ّ ۔ ۰۱۲۳۴۵۶۷۸۹',
   'sat': 'ᱚᱛᱜᱝᱞᱟᱠᱡᱢᱣᱤᱥᱦᱧᱨᱩᱪᱫᱬᱭᱮᱯᱰᱱᱲᱳᱴᱵᱶᱷᱸᱹᱺᱻᱼᱽ',
   'mni': 'ꯀꯁꯂꯃꯄꯅꯆꯇꯈꯉꯊꯋꯌꯍꯎꯏꯐꯑꯒꯓꯔꯕꯖꯗꯘꯙꯚꯛꯜꯝꯞꯟꯠꯡꯢꯣꯤꯥꯦꯧꯨꯩꯪ꯫',
 };
 
 String _nativeCharactersFor(LanguagePack pack) {
-  if (kNativeCharacterSets.containsKey(pack.id)) return kNativeCharacterSets[pack.id]!;
+  if (kNativeCharacterSets.containsKey(pack.id))
+    return kNativeCharacterSets[pack.id]!;
   if (pack.family == ScriptFamily.brahmic) return kNativeCharacterSets['hi']!;
   if (pack.family == ScriptFamily.arabic) return kNativeCharacterSets['ur']!;
   return '';
@@ -41,17 +54,34 @@ String _nativeCharactersFor(LanguagePack pack) {
 List<LayoutRows> nativeLayoutPagesFor(LanguagePack pack) {
   final first = kNativeLayouts[pack.id] ?? kDevanagariFallback;
   final raw = _nativeCharactersFor(pack);
-  final chars = <String>{...raw.runes.map(String.fromCharCode)}.toList();
+  final chars = <String>[];
+  final seen = <String>{};
+  for (final rune in raw.runes) {
+    final ch = String.fromCharCode(rune);
+    if (seen.add(ch)) chars.add(ch);
+  }
   if (chars.isEmpty) return [first];
+
+  // The first page is the familiar Gboard/InScript-inspired arrangement:
+  // matras and signs first, then high-frequency consonants. The previous
+  // implementation discarded this arrangement and scanned the Unicode
+  // inventory into arbitrary 10/9/8 chunks, which made every downloaded
+  // language feel randomly ordered. Keep the hand-curated base page and put
+  // the complete alphabet in deterministic continuation pages.
+  final used = first.rows.expand((row) => row).toSet();
+  final remainder = chars.where((ch) => !used.contains(ch)).toList();
   final pages = <LayoutRows>[];
-  for (var i = 0; i < chars.length; i += 27) {
-    final end = i + 27 < chars.length ? i + 27 : chars.length;
-    final page = chars.sublist(i, end);
-    pages.add(LayoutRows([
-      page.take(10).toList(),
-      page.skip(10).take(9).toList(),
-      page.skip(19).take(8).toList(),
-    ]));
+  pages.add(first);
+  for (var i = 0; i < remainder.length; i += 27) {
+    final end = i + 27 < remainder.length ? i + 27 : remainder.length;
+    final page = remainder.sublist(i, end);
+    pages.add(
+      LayoutRows([
+        page.take(10).toList(),
+        page.skip(10).take(9).toList(),
+        page.skip(19).take(8).toList(),
+      ]),
+    );
   }
   return pages.isEmpty ? [first] : pages;
 }

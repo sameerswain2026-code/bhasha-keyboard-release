@@ -57,6 +57,7 @@ class BhashaImeService : InputMethodService() {
     private var flutterView: FlutterView? = null
     private var imeChannel: MethodChannel? = null
     private var micStream: MicStreamHandler? = null
+    private var speechStream: SpeechStreamHandler? = null
     private var clipboardManager: ClipboardManager? = null
     private var clipListener: ClipboardManager.OnPrimaryClipChangedListener? = null
     private val mainHandler = Handler(Looper.getMainLooper())
@@ -245,6 +246,28 @@ class BhashaImeService : InputMethodService() {
             engine.dartExecutor.binaryMessenger, "bhasha/mic"
         ).setStreamHandler(micStream)
 
+        speechStream = SpeechStreamHandler(this)
+        MethodChannel(
+            engine.dartExecutor.binaryMessenger, "bhasha/speech"
+        ).setMethodCallHandler { call, result ->
+            when (call.method) {
+                "hasMicPermission" -> result.success(hasMic())
+                "startSpeech" -> result.success(
+                    if (hasMic()) speechStream?.startSpeech(
+                        call.argument<String>("locale") ?: "en-IN"
+                    ) == true else false
+                )
+                "stopSpeech" -> {
+                    speechStream?.stopSpeech()
+                    result.success(true)
+                }
+                else -> result.notImplemented()
+            }
+        }
+        EventChannel(
+            engine.dartExecutor.binaryMessenger, "bhasha/speech_results"
+        ).setStreamHandler(speechStream)
+
         flutterEngine = engine
 
         // Watch the SYSTEM clipboard (not just our own copy button) so
@@ -357,6 +380,7 @@ class BhashaImeService : InputMethodService() {
     override fun onFinishInputView(finishingInput: Boolean) {
         imeChannel?.invokeMethod("finishInput", null)
         micStream?.stopRecording()
+        speechStream?.stopSpeech()
         flutterEngine?.lifecycleChannel?.appIsInactive()
         super.onFinishInputView(finishingInput)
     }
@@ -514,6 +538,7 @@ class BhashaImeService : InputMethodService() {
     override fun onDestroy() {
         clipListener?.let { clipboardManager?.removePrimaryClipChangedListener(it) }
         micStream?.stopRecording()
+        speechStream?.stopSpeech()
         selfChangeReset?.let { mainHandler.removeCallbacks(it) }
         selfChangeReset = null
         flutterView?.detachFromFlutterEngine()
