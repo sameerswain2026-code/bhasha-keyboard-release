@@ -63,7 +63,9 @@ const LanguagePack _autoMixLanguagePack = LanguagePack(
   nativeName: 'Auto Mix',
   locale: 'unknown',
   family: ScriptFamily.latin,
-  sarvamCodeOverride: 'unknown',
+  // Sarvam realtime accepts `auto` for adaptive multilingual detection;
+  // `unknown` is rejected as an unsupported language_code.
+  sarvamCodeOverride: 'auto',
 );
 
 class KeyboardController extends ChangeNotifier {
