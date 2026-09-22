@@ -21,6 +21,10 @@ class SarvamKeyPool {
   }
 
   int get length => _keys.length;
+
+  /// Number of non-empty keys compiled into this build. Values are never
+  /// exposed; this is used only for an actionable mic diagnostic.
+  int get configuredCount => _keys.where((key) => key.isNotEmpty).length;
   bool get hasUsableKey => _keys.any((key) => key.isNotEmpty);
   int get healthyCount => _keys.length - _failed.length;
   String get current => _keys[_index];

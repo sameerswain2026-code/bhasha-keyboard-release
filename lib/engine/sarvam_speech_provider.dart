@@ -101,7 +101,9 @@ class SarvamSpeechProvider implements SpeechProvider {
       // APKs distributed without private credentials must never wait for an
       // 8-second WebSocket timeout. ResilientSpeechProvider immediately
       // switches to Android SpeechRecognizer after this signal.
-      _onError?.call('Sarvam credentials unavailable');
+      _onError?.call(
+        'Sarvam credentials unavailable in this build (0 keys compiled)',
+      );
       return;
     }
     _connectAndStream();
@@ -181,7 +183,17 @@ class SarvamSpeechProvider implements SpeechProvider {
 
       await _startMicPump(ws);
     } catch (e) {
-      _failoverAndRetry(key, message: e.toString());
+      final message = e.toString();
+      final authRejected =
+          SarvamKeyPool.isKeyError(message: message) ||
+          message.contains('401') ||
+          message.contains('403');
+      _failoverAndRetry(
+        key,
+        message: authRejected
+            ? 'Sarvam authentication rejected this key'
+            : message,
+      );
     }
   }
 

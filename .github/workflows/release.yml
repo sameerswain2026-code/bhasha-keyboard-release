@@ -56,6 +56,28 @@ jobs:
           SARVAM_KEY_COUNT="$(printf '%s' "$SARVAM_BUILD_KEYS" | awk -F',' '{n=0; for (i=1; i<=NF; i++) if ($i ~ /[^[:space:]]/) n++; print n}')"
           test "$SARVAM_KEY_COUNT" -ge 1 || { echo 'SARVAM_API_KEYS is empty; refusing to build a mic-disabled release.'; exit 1; }
           echo "Sarvam key pool configured: $SARVAM_KEY_COUNT key(s)"
+          python3 -m pip install --disable-pip-version-check -q websockets
+          SARVAM_SMOKE_KEYS="$SARVAM_BUILD_KEYS" python3 - <<'PY'
+          import asyncio, os, websockets
+          uri = ('wss://api.sarvam.ai/speech-to-text-realtime/ws'
+                 '?language_code=auto&model=saaras:v3-realtime&mode=transcribe'
+                 '&sample_rate=16000&encoding=linear16&stream_type=fast'
+                 '&endpointing=vad&return_timestamps=false')
+          async def check():
+              keys = [x.strip() for x in os.environ['SARVAM_SMOKE_KEYS'].split(',') if x.strip()]
+              async def one(key):
+                  try:
+                      async with websockets.connect(uri, additional_headers={'API-SUBSCRIPTION-KEY': key}, open_timeout=8) as ws:
+                          await asyncio.wait_for(ws.recv(), timeout=8)
+                          return True
+                  except Exception:
+                      return False
+              results = await asyncio.gather(*(one(key) for key in keys))
+              print(f'Sarvam realtime handshake: {sum(results)}/{len(results)} key(s) accepted')
+              if not any(results):
+                  raise SystemExit('No Sarvam key was accepted by the realtime endpoint')
+          asyncio.run(check())
+          PY
           flutter build apk --release --split-per-abi \
             --dart-define="GEMINI_API_KEYS=$GEMINI_API_KEYS" \
             --dart-define="SARVAM_API_KEYS=$SARVAM_BUILD_KEYS" \
