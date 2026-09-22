@@ -39,7 +39,7 @@ class SarvamSpeechProvider implements SpeechProvider {
 
   LanguagePack? _pack;
   ScriptMode _scriptMode = ScriptMode.native;
-  MicMode _micMode = MicMode.transcribe;
+  MicMode _micMode = MicMode.autoMix;
   LanguagePack? _translateTarget;
   WebSocket? _ws;
   StreamSubscription<List<int>>? _micSub;
@@ -132,7 +132,10 @@ class SarvamSpeechProvider implements SpeechProvider {
     //    English translation in the active language's script.
     final String mode;
     if (_micMode == MicMode.autoMix) {
-      mode = 'codemix';
+      // Auto detection must not be paired with codemix: codemix is intended
+      // for mixed-language output. The keyboard contract is to keep the
+      // detected source language and only change its script on request.
+      mode = _scriptMode == ScriptMode.roman ? 'translit' : 'transcribe';
     } else if (_micMode == MicMode.translate) {
       mode = 'translate';
     } else {

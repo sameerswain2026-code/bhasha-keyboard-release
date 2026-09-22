@@ -38,6 +38,8 @@ class TranslationLanguageDetector {
     if (r >= 0x0C80 && r <= 0x0CFF) return 'kn';
     if (r >= 0x0D00 && r <= 0x0D7F) return 'ml';
     if (r >= 0x0600 && r <= 0x06FF) return 'ur';
+    if (r >= 0x11000 && r <= 0x1107F) return 'sat';
+    if (r >= 0xABC0 && r <= 0xABFF) return 'mni';
     if ((r >= 0x0041 && r <= 0x005A) || (r >= 0x0061 && r <= 0x007A)) {
       return 'en';
     }

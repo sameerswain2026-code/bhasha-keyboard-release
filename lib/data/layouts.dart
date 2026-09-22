@@ -63,29 +63,24 @@ String _nativeCharactersFor(LanguagePack pack) {
 
 /// Split the ordered native alphabet into comfortable Gboard-like pages.
 List<LayoutRows> nativeLayoutPagesFor(LanguagePack pack) {
-  final first = kNativeLayouts[pack.id] ?? kDevanagariFallback;
   final raw = _nativeCharactersFor(pack);
   final chars = <String>[];
   final seen = <String>{};
   for (final rune in raw.runes) {
     final ch = String.fromCharCode(rune);
-    if (seen.add(ch)) chars.add(ch);
+    if (ch.trim().isNotEmpty && seen.add(ch)) chars.add(ch);
   }
-  if (chars.isEmpty) return [first];
+  if (chars.isEmpty) {
+    return [kNativeLayouts[pack.id] ?? kDevanagariFallback];
+  }
 
-  // The first page is the familiar Gboard/InScript-inspired arrangement:
-  // matras and signs first, then high-frequency consonants. The previous
-  // implementation discarded this arrangement and scanned the Unicode
-  // inventory into arbitrary 10/9/8 chunks, which made every downloaded
-  // language feel randomly ordered. Keep the hand-curated base page and put
-  // the complete alphabet in deterministic continuation pages.
-  final used = first.rows.expand((row) => row).toSet();
-  final remainder = chars.where((ch) => !used.contains(ch)).toList();
+  // The source inventory is deliberately written in the language's standard
+  // vowel/consonant/sign/digit order. Split that sequence into compact,
+  // Gboard-like pages without reordering or scanning Unicode code points.
   final pages = <LayoutRows>[];
-  pages.add(first);
-  for (var i = 0; i < remainder.length; i += 27) {
-    final end = i + 27 < remainder.length ? i + 27 : remainder.length;
-    final page = remainder.sublist(i, end);
+  for (var i = 0; i < chars.length; i += 27) {
+    final end = i + 27 < chars.length ? i + 27 : chars.length;
+    final page = chars.sublist(i, end);
     pages.add(
       LayoutRows([
         page.take(10).toList(),
@@ -94,7 +89,7 @@ List<LayoutRows> nativeLayoutPagesFor(LanguagePack pack) {
       ]),
     );
   }
-  return pages.isEmpty ? [first] : pages;
+  return pages;
 }
 
 /// QWERTY layout for Latin/Roman input.

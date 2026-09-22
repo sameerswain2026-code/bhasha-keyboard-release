@@ -17,11 +17,11 @@ class SettingsPanel extends StatelessWidget {
   String _micModeDescription(MicMode mode) {
     switch (mode) {
       case MicMode.transcribe:
-        return 'Speech follows the Native/Roman script setting';
+        return 'Speech language is detected automatically';
       case MicMode.translate:
         return 'Speech is translated; output follows Native/Roman setting';
       case MicMode.autoMix:
-        return 'Speech is always romanized, regardless of language';
+        return 'Speech language is detected automatically';
     }
   }
 
@@ -205,16 +205,12 @@ class SettingsPanel extends StatelessWidget {
                     style: TextStyle(fontSize: 12, color: t.keyText),
                     items: const [
                       DropdownMenuItem(
-                        value: MicMode.transcribe,
-                        child: Text('Transcribe'),
-                      ),
-                      DropdownMenuItem(
                         value: MicMode.translate,
                         child: Text('Translate'),
                       ),
                       DropdownMenuItem(
                         value: MicMode.autoMix,
-                        child: Text('Auto-mix'),
+                        child: Text('Auto'),
                       ),
                     ],
                     onChanged: (m) {

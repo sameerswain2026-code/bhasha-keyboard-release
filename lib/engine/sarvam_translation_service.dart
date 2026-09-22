@@ -41,9 +41,9 @@ class SarvamTranslationService {
       'model': 'sarvam-translate:v1',
       'mode': 'formal',
     };
-    // sarvam-translate:v1 does not support output_script; it returns the
-    // target's native script, which is the correct safe fallback for Indic
-    // targets. Mayura's roman output is limited to its smaller language set.
+    // Sarvam returns native script for Indic targets. English can explicitly
+    // request Roman output; native output for English is handled by the
+    // caller's normal keyboard script path.
     if (target.id == 'en' && outputStyle == ScriptMode.roman) {
       payload['output_script'] = 'roman';
     }

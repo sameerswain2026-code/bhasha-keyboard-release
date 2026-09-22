@@ -39,7 +39,6 @@ enum ActivePanel {
   textEditing,
   resize,
   translateConfig, // Translate Configuration Page (source/target/style + Save)
-  transcribeLang, // Mic-side language selector for Transcribe mode
   clipboard,
   language, // Keyboard TYPING language (independent of mic), via long-press
   settings,
@@ -338,20 +337,19 @@ class KeyboardController extends ChangeNotifier {
   Future<void> Function(String source, String mimeType, String title)?
   hostMediaSharer;
 
-  // ---- Mic mode (Transcribe / Translate / Auto-mix) ----
-  // Exactly 3 modes. Default on first open is Transcribe (Odia, Roman).
-  MicMode _micMode = MicMode.transcribe;
+  // ---- Mic mode (Auto / Translate) ----
+  // Auto is the only speech-to-text mode exposed to users. It asks Sarvam
+  // to detect the spoken language and keeps the user's Native/Roman output
+  // preference without a separate recognition-language dropdown.
+  MicMode _micMode = MicMode.autoMix;
 
   /// Effective mic mode: identical to the stored mode except it safely
-  /// falls back to Transcribe if Translate was never successfully
-  /// activated via Save/Apply (guards a stale/corrupted persisted state
-  /// claiming Translate is live without a saved configuration behind
-  /// it - "the mic must continue functioning as Transcribe Mode if
-  /// Translate Mode has not yet been successfully activated").
+  /// Translate remains opt-in; all other persisted/legacy values resolve to
+  /// Auto so an old Transcribe preference cannot reintroduce the removed UI.
   MicMode get micMode =>
-      (_micMode == MicMode.translate && !_translateEverActivated)
-      ? MicMode.transcribe
-      : _micMode;
+      _micMode == MicMode.translate && _translateEverActivated
+          ? MicMode.translate
+          : MicMode.autoMix;
 
   final TranslationEngine _translationEngine = TranslationEngine();
   final GeminiService _speechPolisher = GeminiService();
@@ -359,33 +357,6 @@ class KeyboardController extends ChangeNotifier {
   bool _speechPolishingEnabled = false;
   bool get speechPolishingEnabled => _speechPolishingEnabled;
 
-  // ---- Transcribe mode config (Method: mic-side Language Selector) ----
-  // Independent of the general typing [_language] - the mic's Transcribe
-  // recognition language defaults to Odia regardless of what script the
-  // user is currently typing in.
-  LanguagePack _transcribeLanguage = LanguageRegistry.byId('or');
-  LanguagePack get transcribeLanguage => _transcribeLanguage;
-  ScriptMode _transcribeStyle = ScriptMode.roman;
-  ScriptMode get transcribeStyle => _transcribeStyle;
-
-  /// Sets the Transcribe mode language + output style (Native/Roman).
-  /// Chosen from the mic-side Language Selector, not the toolbar.
-  void setTranscribeConfig(LanguagePack lang, ScriptMode style) {
-    _transcribeLanguage = lang;
-    if (style == ScriptMode.native && !lang.supportsNative) {
-      style = ScriptMode.roman;
-    } else if (style == ScriptMode.roman && !lang.supportsRoman) {
-      style = ScriptMode.native;
-    }
-    _transcribeStyle = style;
-    _persist('transcribeLang', lang.id);
-    _persist('transcribeStyle', style.name);
-    // Language-code changes require a fresh recognizer session.
-    if (voice.isActive && micMode == MicMode.transcribe) {
-      voice.stopSession(reason: 'transcribe-config-changed');
-    }
-    notifyListeners();
-  }
 
   // ---- Translate mode config (saved/active) ----
   // Default: Source=Odia, Target=English, Output=Roman.
@@ -717,23 +688,9 @@ class KeyboardController extends ChangeNotifier {
       _soundEnabled = prefs.getBool('sound') ?? false;
       _speechPolishingEnabled = prefs.getBool('speechPolishing') ?? false;
       final micModeName = prefs.getString('micMode');
-      if (micModeName != null) {
-        _micMode = MicMode.values.firstWhere(
-          (m) => m.name == micModeName,
-          orElse: () => MicMode.transcribe,
-        );
-      }
-      // Transcribe mode config.
-      final transcribeLangId = prefs.getString('transcribeLang');
-      if (transcribeLangId != null) {
-        _transcribeLanguage = LanguageRegistry.byId(transcribeLangId);
-      }
-      final transcribeStyleName = prefs.getString('transcribeStyle');
-      if (transcribeStyleName != null) {
-        _transcribeStyle = transcribeStyleName == 'native'
-            ? ScriptMode.native
-            : ScriptMode.roman;
-      }
+      if (micModeName == 'translate') _micMode = MicMode.translate;
+      // Legacy `transcribe` and `autoMix` values both migrate to Auto.
+      else _micMode = MicMode.autoMix;
       // Translate mode config (saved/active).
       final translateSourceId = prefs.getString('translateSource');
       if (translateSourceId != null) {
@@ -831,10 +788,7 @@ class KeyboardController extends ChangeNotifier {
               }
             case 'micMode':
               if (v is String) {
-                _micMode = MicMode.values.firstWhere(
-                  (m) => m.name == v,
-                  orElse: () => MicMode.transcribe,
-                );
+                _micMode = v == 'translate' ? MicMode.translate : MicMode.autoMix;
               }
             case 'haptics':
               if (v is bool) _hapticsEnabled = v;
@@ -842,14 +796,6 @@ class KeyboardController extends ChangeNotifier {
               if (v is bool) _soundEnabled = v;
             case 'speechPolishing':
               if (v is bool) _speechPolishingEnabled = v;
-            case 'transcribeLang':
-              if (v is String) _transcribeLanguage = LanguageRegistry.byId(v);
-            case 'transcribeStyle':
-              if (v is String) {
-                _transcribeStyle = v == 'native'
-                    ? ScriptMode.native
-                    : ScriptMode.roman;
-              }
             case 'translateSource':
               if (v is String) _translateSource = LanguageRegistry.byId(v);
             case 'translateTarget':
@@ -1574,14 +1520,12 @@ class KeyboardController extends ChangeNotifier {
 
   /// The language the mic should recognize speech in, per the currently
   /// EFFECTIVE mode ([micMode], not the raw stored [_micMode]):
-  /// - Transcribe: the dedicated Transcribe-mode language (default
-  ///   Odia), independent of the general typing language.
   /// - Translate: the saved Source language.
-  /// - Auto Mix: a synthetic multilingual pack (Sarvam auto-detects).
+  /// - Auto: a synthetic multilingual pack (Sarvam auto-detects).
   LanguagePack get _voiceRecognitionLanguage {
     switch (micMode) {
       case MicMode.transcribe:
-        return _transcribeLanguage;
+        return _autoMixLanguagePack;
       case MicMode.translate:
         return _translateSource;
       case MicMode.autoMix:
@@ -1593,7 +1537,7 @@ class KeyboardController extends ChangeNotifier {
   ScriptMode get _voiceOutputStyle {
     switch (micMode) {
       case MicMode.transcribe:
-        return _transcribeStyle;
+        return _autoMixStyle;
       case MicMode.translate:
         return _translateOutputStyle;
       case MicMode.autoMix:
@@ -1615,7 +1559,7 @@ class KeyboardController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Changes the mic mode (Transcribe / Translate / Auto-mix). Applied
+  /// Changes the mic mode (Auto / Translate). Applied
   /// on the next voice session; if a session is currently active it is
   /// re-armed immediately so the change takes effect without requiring
   /// the user to manually stop voice typing first.
@@ -1644,7 +1588,7 @@ class KeyboardController extends ChangeNotifier {
   Future<void> _processVoiceFinal(String rawText) async {
     // Committed text is never erased: append finalized speech.
     if (rawText.trim().isEmpty) return;
-    // Translate is polished once after translation; Transcribe/Auto-mix are
+    // Translate is polished once after translation; Auto is
     // polished once before insertion/assistant routing. This avoids the old
     // two-Gemini-call delay in Translate mode.
     final text = micMode == MicMode.translate
@@ -1653,7 +1597,7 @@ class KeyboardController extends ChangeNotifier {
 
     // AI Web Assistant middleware (optional, opt-in - see the field docs
     // on [_ai]/[_aiCapture] above). Only ever consulted for
-    // Transcribe/Auto Mix, per spec Translate mode's existing behavior
+    // Auto, per spec Translate mode's existing behavior
     // is left completely untouched. When the assistant is disabled,
     // this entire block is skipped - zero wake-word scan, zero Tavily/
     // Gemini call, zero behavior change versus the original pipeline.
@@ -1682,7 +1626,7 @@ class KeyboardController extends ChangeNotifier {
       }
     }
 
-    // Transcribe/Auto-mix: provider already returns the correct script -
+    // Auto: provider already returns the detected language in the correct script -
     // append synchronously (no async hop) so callers/tests observing the
     // editor immediately after this call see the appended text.
     if (micMode != MicMode.translate) {
@@ -1708,14 +1652,10 @@ class KeyboardController extends ChangeNotifier {
     if (!_speechPolishingEnabled) return Future.value(text);
     final selectedLanguage =
         language ??
-        (micMode == MicMode.transcribe
-            ? _transcribeLanguage.englishName
-            : 'the detected language');
+        'the detected language';
     final selectedNative =
         native ??
-        (micMode == MicMode.transcribe
-            ? _transcribeStyle == ScriptMode.native
-            : _autoMixStyle == ScriptMode.native);
+        _autoMixStyle == ScriptMode.native;
     return _speechPolisher.polishSpeech(
       text,
       language: selectedLanguage,
@@ -1881,6 +1821,17 @@ class KeyboardController extends ChangeNotifier {
     // destination language. This avoids the old trial-through-every-language
     // behavior, which was slow and often selected the wrong source.
     final source = TranslationLanguageDetector.detect(text);
+    final sarvamResult = await _sarvamTranslator.translate(
+      text,
+      source: source,
+      target: target,
+      outputStyle: target.isLatin ? ScriptMode.roman : ScriptMode.native,
+    );
+    if (sarvamResult != null && sarvamResult.trim().isNotEmpty) {
+      await replacer(sarvamResult);
+      if (speak) await hostTextSpeaker?.call(sarvamResult, target.locale);
+      return;
+    }
     if (!source.isLatin && !target.isLatin && source.id != target.id) {
       final translated = await _speechPolisher.translateText(
         text,

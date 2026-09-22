@@ -37,7 +37,6 @@ import 'panels/settings_panel.dart';
 import 'panels/sticker_panel.dart';
 import 'panels/text_editing_panel.dart';
 import 'panels/theme_panel.dart';
-import 'panels/transcribe_lang_panel.dart';
 import 'panels/translate_config_panel.dart';
 
 const double _kToolbarHeight = 46;
@@ -94,8 +93,6 @@ class KeyboardView extends StatelessWidget {
         return const ResizePanel();
       case ActivePanel.translateConfig:
         return const TranslateConfigPanel();
-      case ActivePanel.transcribeLang:
-        return const TranscribeLangPanel();
       case ActivePanel.clipboard:
         return const ClipboardPanel();
       case ActivePanel.language:

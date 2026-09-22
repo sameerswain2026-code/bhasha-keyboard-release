@@ -109,7 +109,7 @@ class ResilientSpeechProvider implements SpeechProvider {
   void Function(String)? _onError;
   LanguagePack? _pack;
   ScriptMode _scriptMode = ScriptMode.native;
-  MicMode _micMode = MicMode.transcribe;
+  MicMode _micMode = MicMode.autoMix;
   LanguagePack? _target;
   bool _fallbackStarted = false;
 
@@ -140,7 +140,7 @@ class ResilientSpeechProvider implements SpeechProvider {
         // Android SpeechRecognizer only transcribes one locale. It cannot
         // implement Sarvam Translate or Auto Mix; falling back here would
         // insert unrelated English text after a realtime API failure.
-        if (_micMode != MicMode.transcribe) {
+        if (_micMode != MicMode.autoMix) {
           _onError?.call(message);
           return;
         }
