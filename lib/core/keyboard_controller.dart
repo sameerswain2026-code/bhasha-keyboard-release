@@ -624,6 +624,22 @@ class KeyboardController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Reads the Android clipboard directly into an embedded panel field.
+  /// This is separate from host-field paste because the IME is already open
+  /// and the text must remain inside the panel workspace.
+  Future<void> pasteIntoPanelFromClipboard() async {
+    String? text;
+    try {
+      text = (await Clipboard.getData(Clipboard.kTextPlain))?.text;
+    } catch (_) {}
+    text ??= _clipboardHistory.isNotEmpty ? _clipboardHistory.first : null;
+    if (text == null || text.trim().isEmpty) return;
+    _panelInputText = text.trim();
+    _panelKeyboardActive = false;
+    addToClipboardHistory(_panelInputText);
+    notifyListeners();
+  }
+
   /// Opens the on-panel mini-keyboard for the given field, seeding it
   /// with [initialText] (kept when re-opening the same field).
   void openPanelKeyboard({String initialText = ''}) {
@@ -1857,24 +1873,28 @@ class KeyboardController extends ChangeNotifier {
   Future<void> translateSelectedText() =>
       translateSelectedTextTo(_language, speak: false);
 
-  Future<String> translateManualText(String text, LanguagePack target) async {
+  Future<String> translateManualText(
+    String text,
+    LanguagePack target, {
+    LanguagePack? source,
+  }) async {
     final clean = text.trim();
     if (clean.isEmpty) return '';
-    final source = TranslationLanguageDetector.detect(clean);
+    final detectedSource = source ?? TranslationLanguageDetector.detect(clean);
     final sarvamResult = await _sarvamTranslator.translate(
       clean,
-      source: source,
+      source: detectedSource,
       target: target,
       outputStyle: target.isLatin ? ScriptMode.roman : ScriptMode.native,
     );
     if (sarvamResult != null && sarvamResult.trim().isNotEmpty) {
       return sarvamResult.trim();
     }
-    final english = source.id == 'en'
+    final english = detectedSource.id == 'en'
         ? clean
         : await _translationEngine.translate(
                 clean,
-                source,
+                detectedSource,
                 LanguageRegistry.byId('en'),
               ) ??
               clean;
