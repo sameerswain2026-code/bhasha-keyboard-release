@@ -29,6 +29,7 @@ import 'key_widget.dart';
 import 'mic_indicator.dart';
 import 'panels/clipboard_panel.dart';
 import 'panels/dictionary_panel.dart';
+import 'panels/manual_translate_panel.dart';
 import 'panels/emoji_panel.dart';
 import 'panels/gif_panel.dart';
 import 'panels/language_panel.dart';
@@ -95,6 +96,8 @@ class KeyboardView extends StatelessWidget {
         return const SnippetsPanel();
       case ActivePanel.dictionary:
         return const DictionaryPanel();
+      case ActivePanel.manualTranslate:
+        return const ManualTranslatePanel();
       case ActivePanel.resize:
         return const ResizePanel();
       case ActivePanel.translateConfig:
@@ -465,9 +468,9 @@ class _Toolbar extends StatelessWidget {
             iconSlot(Icons.content_paste, ActivePanel.clipboard, 'Clipboard'),
             iconSlot(
               Icons.translate,
-              ActivePanel.translateConfig,
+              ActivePanel.manualTranslate,
               'Translate',
-              onTap: kb.openTranslateConfig,
+              onTap: kb.openManualTranslate,
             ),
             iconSlot(Icons.settings_outlined, ActivePanel.settings, 'Settings'),
           ],

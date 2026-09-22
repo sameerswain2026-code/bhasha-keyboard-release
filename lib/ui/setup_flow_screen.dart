@@ -1,21 +1,9 @@
-/// Android setup flow: guides the user through the three steps required
-/// to use Bhasha Keyboard system-wide -
-///   1. Enable the keyboard in Settings > Languages & input
-///   2. Select it as the active input method
-///   3. Grant microphone permission for real-time voice typing
-///
-/// Each step's live status is polled from the platform side (via
-/// ImeSetupHelper) so the screen reflects what the user actually did in
-/// Settings, rather than assuming success after a tap. The screen is only
-/// shown on Android; web preview goes straight to the demo editor.
+/// Premium first-run setup and feature education for Bhasha Keyboard.
 library;
-
-import 'dart:async';
 
 import 'package:flutter/material.dart';
 
 import '../ime/setup_helper.dart';
-import 'kb_theme.dart';
 
 class SetupFlowScreen extends StatefulWidget {
   final VoidCallback onContinue;
@@ -47,10 +35,7 @@ class _SetupFlowScreenState extends State<SetupFlowScreen>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    // User returns from Settings/permission dialog -> re-check live status.
-    if (state == AppLifecycleState.resumed) {
-      _refreshStatus();
-    }
+    if (state == AppLifecycleState.resumed) _refreshStatus();
   }
 
   Future<void> _refreshStatus() async {
@@ -70,298 +55,377 @@ class _SetupFlowScreenState extends State<SetupFlowScreen>
 
   @override
   Widget build(BuildContext context) {
-    final t = KbTheme.of(context);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final text = dark ? Colors.white : const Color(0xFF111827);
+    final muted = dark ? Colors.white70 : const Color(0xFF667085);
+    final primary = Theme.of(context).colorScheme.primary;
     return Scaffold(
-      backgroundColor: isDark
-          ? const Color(0xFF121316)
-          : const Color(0xFFF7F8FA),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(20, 24, 20, 12),
-                children: [
-                  Container(
-                    width: 64,
-                    height: 64,
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF1A73E8), Color(0xFF7C4DFF)],
-                      ),
-                      borderRadius: BorderRadius.circular(18),
-                    ),
-                    child: const Center(
-                      child: Text(
-                        'भ',
-                        style: TextStyle(
-                          fontSize: 32,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                        ),
+      body: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: dark
+                ? const [Color(0xFF0B1022), Color(0xFF17152D)]
+                : const [Color(0xFFF6F8FF), Color(0xFFEFF2FF)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+                  children: [
+                    _Hero(primary: primary, text: text, muted: muted),
+                    const SizedBox(height: 18),
+                    Text(
+                      'Built for the way India speaks',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w900,
+                        color: text,
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 18),
-                  Text(
-                    'Set up Bhasha Keyboard',
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
-                      color: t.keyText,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Three quick steps to use Bhasha Keyboard in WhatsApp, '
-                    'Telegram and every other app.',
-                    style: TextStyle(
-                      fontSize: 13.5,
-                      height: 1.4,
-                      color: t.keyTextSecondary,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  _StepCard(
-                    stepNumber: 1,
-                    icon: Icons.keyboard_alt_outlined,
-                    title: 'Enable the keyboard',
-                    subtitle: _enabled
-                        ? 'Enabled in system settings'
-                        : 'Turn on Bhasha Keyboard in Languages & input',
-                    done: _enabled,
-                    buttonLabel: _enabled ? 'Enabled' : 'Open settings',
-                    onTap: _enabled
-                        ? null
-                        : () async {
-                            await ImeSetupHelper.openImeSettings();
-                            _refreshStatus();
-                          },
-                  ),
-                  const SizedBox(height: 12),
-                  _StepCard(
-                    stepNumber: 2,
-                    icon: Icons.swap_horiz,
-                    title: 'Select as active keyboard',
-                    subtitle: _selected
-                        ? 'Bhasha Keyboard is the active input method'
-                        : 'Choose Bhasha Keyboard from the keyboard picker',
-                    done: _selected,
-                    buttonLabel: _selected ? 'Selected' : 'Choose keyboard',
-                    enabled: _enabled,
-                    onTap: _selected
-                        ? null
-                        : () async {
-                            await ImeSetupHelper.showImePicker();
-                            _refreshStatus();
-                          },
-                  ),
-                  const SizedBox(height: 12),
-                  _StepCard(
-                    stepNumber: 3,
-                    icon: Icons.mic_none,
-                    title: 'Allow microphone access',
-                    subtitle: _micGranted
-                        ? 'Voice typing is ready'
-                        : 'Needed only for real-time voice typing',
-                    done: _micGranted,
-                    buttonLabel: _micGranted ? 'Granted' : 'Grant permission',
-                    onTap: _micGranted
-                        ? null
-                        : () async {
-                            await ImeSetupHelper.requestMicPermission();
-                            _refreshStatus();
-                          },
-                  ),
-                  const SizedBox(height: 20),
-                  if (_checked && !_allDone)
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: t.accent.withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Icon(Icons.info_outline, size: 16, color: t.accent),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              'You can finish this later from Settings inside '
-                              'the keyboard toolbar. Typing works in this demo '
-                              'app right away.',
-                              style: TextStyle(
-                                fontSize: 12,
-                                height: 1.4,
-                                color: t.keyTextSecondary,
-                              ),
-                            ),
-                          ),
-                        ],
+                    const SizedBox(height: 6),
+                    Text(
+                      'One keyboard for 22 Indian languages, Auto voice typing, manual translation, and your own shortcuts.',
+                      style: TextStyle(
+                        fontSize: 13.5,
+                        height: 1.4,
+                        color: muted,
                       ),
                     ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        side: BorderSide(color: t.border),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      onPressed: widget.onContinue,
-                      child: Text(
-                        _allDone ? 'Continue' : 'Skip for now',
-                        style: TextStyle(
-                          color: t.keyText,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ),
-                  if (_allDone) ...[
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: t.accent,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                    const SizedBox(height: 14),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _Feature(
+                            icon: Icons.language,
+                            title: '22 languages',
+                            color: primary,
                           ),
                         ),
-                        onPressed: widget.onContinue,
-                        child: const Text(
-                          'Try it now',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w700,
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: _Feature(
+                            icon: Icons.auto_awesome,
+                            title: 'Auto voice',
+                            color: const Color(0xFF7C3AED),
                           ),
                         ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: _Feature(
+                            icon: Icons.translate,
+                            title: 'Translate',
+                            color: const Color(0xFF0F766E),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 22),
+                    Text(
+                      'Get started in three steps',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: text,
                       ),
                     ),
+                    const SizedBox(height: 10),
+                    _StepCard(
+                      step: 1,
+                      icon: Icons.keyboard_alt_outlined,
+                      title: 'Enable Bhasha',
+                      subtitle: _enabled
+                          ? 'Keyboard enabled'
+                          : 'Turn it on in Languages & input',
+                      done: _enabled,
+                      button: _enabled ? 'Done' : 'Open settings',
+                      onTap: _enabled
+                          ? null
+                          : () async {
+                              await ImeSetupHelper.openImeSettings();
+                              _refreshStatus();
+                            },
+                    ),
+                    const SizedBox(height: 9),
+                    _StepCard(
+                      step: 2,
+                      icon: Icons.touch_app_outlined,
+                      title: 'Choose it to type',
+                      subtitle: _selected
+                          ? 'Bhasha is active'
+                          : 'Select Bhasha from the keyboard picker',
+                      done: _selected,
+                      enabled: _enabled,
+                      button: _selected ? 'Done' : 'Choose',
+                      onTap: _selected
+                          ? null
+                          : () async {
+                              await ImeSetupHelper.showImePicker();
+                              _refreshStatus();
+                            },
+                    ),
+                    const SizedBox(height: 9),
+                    _StepCard(
+                      step: 3,
+                      icon: Icons.mic_none_rounded,
+                      title: 'Unlock your voice',
+                      subtitle: _micGranted
+                          ? 'Voice typing is ready'
+                          : 'Optional: needed for Auto voice typing',
+                      done: _micGranted,
+                      button: _micGranted ? 'Ready' : 'Allow mic',
+                      onTap: _micGranted
+                          ? null
+                          : () async {
+                              await ImeSetupHelper.requestMicPermission();
+                              _refreshStatus();
+                            },
+                    ),
+                    const SizedBox(height: 14),
+                    if (_checked && !_allDone)
+                      Text(
+                        'You can skip now and finish setup later from the keyboard Settings.',
+                        style: TextStyle(fontSize: 12, color: muted),
+                      ),
                   ],
-                ],
+                ),
               ),
-            ),
-          ],
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 4, 20, 18),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    onPressed: widget.onContinue,
+                    style: FilledButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 15),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    child: Text(_allDone ? 'Start typing' : 'Explore Bhasha'),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-class _StepCard extends StatelessWidget {
-  final int stepNumber;
+class _Hero extends StatelessWidget {
+  const _Hero({required this.primary, required this.text, required this.muted});
+  final Color primary;
+  final Color text;
+  final Color muted;
+
+  @override
+  Widget build(BuildContext context) => TweenAnimationBuilder<double>(
+    tween: Tween(begin: .94, end: 1),
+    duration: const Duration(milliseconds: 700),
+    curve: Curves.easeOutBack,
+    builder: (_, scale, child) => Transform.scale(scale: scale, child: child),
+    child: Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(colors: [primary, const Color(0xFF6D28D9)]),
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: [
+          BoxShadow(
+            color: primary.withValues(alpha: .25),
+            blurRadius: 28,
+            offset: const Offset(0, 12),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: .18),
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                child: const Center(
+                  child: Text(
+                    'भ',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 28,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                'BHASHA KEYBOARD',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1.2,
+                  fontSize: 13,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          const Text(
+            'Type India,\nyour way.',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 31,
+              height: 1.02,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'Speak naturally. Translate instantly. Keep your words yours.',
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: .85),
+              fontSize: 13.5,
+              height: 1.35,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+class _Feature extends StatelessWidget {
+  const _Feature({
+    required this.icon,
+    required this.title,
+    required this.color,
+  });
   final IconData icon;
   final String title;
-  final String subtitle;
-  final bool done;
-  final String buttonLabel;
-  final VoidCallback? onTap;
-  final bool enabled;
+  final Color color;
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 7),
+    decoration: BoxDecoration(
+      color: color.withValues(alpha: .09),
+      borderRadius: BorderRadius.circular(15),
+      border: Border.all(color: color.withValues(alpha: .18)),
+    ),
+    child: Column(
+      children: [
+        Icon(icon, color: color, size: 22),
+        const SizedBox(height: 5),
+        Text(
+          title,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 10.5,
+            fontWeight: FontWeight.w800,
+            color: color,
+          ),
+        ),
+      ],
+    ),
+  );
+}
 
+class _StepCard extends StatelessWidget {
   const _StepCard({
-    required this.stepNumber,
+    required this.step,
     required this.icon,
     required this.title,
     required this.subtitle,
     required this.done,
-    required this.buttonLabel,
+    required this.button,
     required this.onTap,
     this.enabled = true,
   });
-
+  final int step;
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final bool done;
+  final String button;
+  final VoidCallback? onTap;
+  final bool enabled;
   @override
   Widget build(BuildContext context) {
-    final t = KbTheme.of(context);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Container(
-      padding: const EdgeInsets.all(14),
+    final scheme = Theme.of(context).colorScheme;
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 250),
+      padding: const EdgeInsets.all(13),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E2024) : Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        color: Theme.of(context).cardColor.withValues(alpha: .88),
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: done ? Colors.green.withValues(alpha: 0.4) : t.border,
+          color: done
+              ? Colors.green.withValues(alpha: .5)
+              : scheme.outlineVariant,
         ),
       ),
       child: Row(
         children: [
           Container(
-            width: 40,
-            height: 40,
+            width: 38,
+            height: 38,
             decoration: BoxDecoration(
               color: done
-                  ? Colors.green.withValues(alpha: 0.14)
-                  : t.accent.withValues(alpha: 0.12),
+                  ? Colors.green.withValues(alpha: .12)
+                  : scheme.primary.withValues(alpha: .1),
               shape: BoxShape.circle,
             ),
             child: Icon(
-              done ? Icons.check_circle : icon,
-              color: done ? Colors.green : t.accent,
+              done ? Icons.check : icon,
+              color: done ? Colors.green : scheme.primary,
               size: 20,
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 11),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Step $stepNumber · $title',
-                  style: TextStyle(
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w700,
-                    color: t.keyText,
+                  '0$step  ·  $title',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 3),
                 Text(
                   subtitle,
                   style: TextStyle(
-                    fontSize: 11.5,
-                    height: 1.3,
-                    color: t.keyTextSecondary,
+                    fontSize: 11,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
               ],
             ),
           ),
           const SizedBox(width: 8),
-          SizedBox(
-            width: 96,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: done
-                    ? Colors.green.withValues(alpha: 0.14)
-                    : (enabled ? t.accent : t.keyBgSpecial),
-                foregroundColor: done ? Colors.green : Colors.white,
-                elevation: 0,
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
+          OutlinedButton(
+            onPressed: enabled && !done ? onTap : null,
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(11),
               ),
-              onPressed: (enabled && !done) ? onTap : null,
-              child: Text(
-                buttonLabel,
-                style: const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                ),
-                textAlign: TextAlign.center,
-                maxLines: 2,
+            ),
+            child: Text(
+              button,
+              style: const TextStyle(
+                fontSize: 10.5,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ),

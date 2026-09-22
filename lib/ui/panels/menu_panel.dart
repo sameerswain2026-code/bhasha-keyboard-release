@@ -42,6 +42,11 @@ const List<_MenuItem> _items = [
     panel: ActivePanel.dictionary,
   ),
   _MenuItem(
+    Icons.translate,
+    'Manual Translate',
+    panel: ActivePanel.manualTranslate,
+  ),
+  _MenuItem(
     Icons.photo_size_select_large_outlined,
     'Resize',
     panel: ActivePanel.resize,

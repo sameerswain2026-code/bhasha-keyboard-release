@@ -160,6 +160,7 @@ class BhashaImeService : InputMethodService() {
                     }
                     "openManagementApp" -> {
                         startActivity(Intent(this, MainActivity::class.java).apply {
+                            putExtra("management_destination", call.argument<String>("destination") ?: "snippets")
                             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                         })
                         result.success(true)

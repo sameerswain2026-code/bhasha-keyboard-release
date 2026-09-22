@@ -43,6 +43,7 @@ enum ActivePanel {
   dictionary,
   resize,
   translateConfig, // Translate Configuration Page (source/target/style + Save)
+  manualTranslate,
   clipboard,
   language, // Keyboard TYPING language (independent of mic), via long-press
   settings,
@@ -402,6 +403,10 @@ class KeyboardController extends ChangeNotifier {
     _draftTarget = _translateTarget;
     _draftStyle = _translateOutputStyle;
     togglePanel(ActivePanel.translateConfig);
+  }
+
+  void openManualTranslate() {
+    togglePanel(ActivePanel.manualTranslate);
   }
 
   void setDraftSource(LanguagePack p) {
@@ -1851,6 +1856,37 @@ class KeyboardController extends ChangeNotifier {
   /// keyboard language.
   Future<void> translateSelectedText() =>
       translateSelectedTextTo(_language, speak: false);
+
+  Future<String> translateManualText(String text, LanguagePack target) async {
+    final clean = text.trim();
+    if (clean.isEmpty) return '';
+    final source = TranslationLanguageDetector.detect(clean);
+    final sarvamResult = await _sarvamTranslator.translate(
+      clean,
+      source: source,
+      target: target,
+      outputStyle: target.isLatin ? ScriptMode.roman : ScriptMode.native,
+    );
+    if (sarvamResult != null && sarvamResult.trim().isNotEmpty) {
+      return sarvamResult.trim();
+    }
+    final english = source.id == 'en'
+        ? clean
+        : await _translationEngine.translate(
+                clean,
+                source,
+                LanguageRegistry.byId('en'),
+              ) ??
+              clean;
+    return target.id == 'en'
+        ? english
+        : await _translationEngine.translate(
+                english,
+                LanguageRegistry.byId('en'),
+                target,
+              ) ??
+              english;
+  }
 
   /// Translates selected host text into [target], replaces the selection and,
   /// when requested, reads the translated result aloud in that language.

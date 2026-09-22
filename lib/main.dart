@@ -4,6 +4,7 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -77,6 +78,7 @@ class _AppHome extends StatefulWidget {
 class _AppHomeState extends State<_AppHome> {
   static const _prefKey = 'setup_flow_seen';
   bool? _showSetup;
+  String? _managementDestination;
 
   @override
   void initState() {
@@ -90,6 +92,9 @@ class _AppHomeState extends State<_AppHome> {
       return;
     }
     try {
+      _managementDestination = await const MethodChannel(
+        'bhasha/system',
+      ).invokeMethod<String>('getManagementDestination');
       final prefs = await SharedPreferences.getInstance();
       setState(() => _showSetup = !(prefs.getBool(_prefKey) ?? false));
     } catch (_) {
@@ -112,6 +117,11 @@ class _AppHomeState extends State<_AppHome> {
     }
     if (_showSetup == true) {
       return SetupFlowScreen(onContinue: _completeSetup);
+    }
+    if (_managementDestination != null) {
+      return PersonalizationScreen(
+        initialTab: _managementDestination == 'dictionary' ? 1 : 0,
+      );
     }
     return const DemoEditorScreen();
   }

@@ -14,7 +14,9 @@ class DictionaryPanel extends StatelessWidget {
 
   Future<void> _openApp() async {
     try {
-      await const MethodChannel('bhasha/ime').invokeMethod('openManagementApp');
+      await const MethodChannel(
+        'bhasha/ime',
+      ).invokeMethod('openManagementApp', {'destination': 'dictionary'});
     } catch (_) {}
   }
 

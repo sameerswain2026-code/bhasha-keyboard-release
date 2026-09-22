@@ -9,7 +9,9 @@ import '../engine/snippet_store.dart';
 import 'personalization_flow_widgets.dart';
 
 class PersonalizationScreen extends StatelessWidget {
-  const PersonalizationScreen({super.key});
+  const PersonalizationScreen({super.key, this.initialTab = 0});
+
+  final int initialTab;
 
   Future<List<String>?> _form(
     BuildContext context, {
@@ -75,6 +77,7 @@ class PersonalizationScreen extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     return DefaultTabController(
       length: 2,
+      initialIndex: initialTab.clamp(0, 1),
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Personalize Bhasha'),

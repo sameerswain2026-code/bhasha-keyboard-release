@@ -43,6 +43,9 @@ class MainActivity : FlutterActivity() {
                     imm.showInputMethodPicker()
                     result.success(true)
                 }
+                "getManagementDestination" -> {
+                    result.success(intent.getStringExtra("management_destination"))
+                }
                 "isImeEnabled" -> {
                     val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
                     val enabled = imm.enabledInputMethodList.any {
