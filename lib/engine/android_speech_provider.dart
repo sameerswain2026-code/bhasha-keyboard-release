@@ -140,9 +140,12 @@ class ResilientSpeechProvider implements SpeechProvider {
     provider.setErrorHandler((message) {
       if (identical(provider, _primary) && !_fallbackStarted && _pack != null) {
         // Android SpeechRecognizer is not multilingual/translated like
-        // Sarvam, but it is still a useful live fallback. The controller's
-        // existing translate pipeline can post-process its source text, and
-        // Auto mode is better served by real speech than a dead spinner.
+        // Sarvam. Never insert an unrelated English fallback into Auto or
+        // Translate sessions; retrying the primary session is safer.
+        if (_micMode == MicMode.autoMix || _micMode == MicMode.translate) {
+          _onError?.call(message);
+          return;
+        }
         _fallbackStarted = true;
         unawaited(_primary.stop());
         _wire(_fallback);

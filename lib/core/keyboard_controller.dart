@@ -69,10 +69,9 @@ const LanguagePack _autoMixLanguagePack = LanguagePack(
   locale: 'unknown',
   family: ScriptFamily.latin,
   // Sarvam realtime accepts `auto` for adaptive multilingual detection;
-  // Sarvam uses `unknown` for automatic detection across its supported
-  // Indian languages. `auto` is not the documented value and caused the
-  // realtime path to behave inconsistently outside English/Hindi.
-  sarvamCodeOverride: 'unknown',
+  // Sarvam realtime uses `auto` for adaptive detection across its supported
+  // Indian languages. (`unknown` belongs to the REST/batch API.)
+  sarvamCodeOverride: 'auto',
 );
 
 class KeyboardController extends ChangeNotifier {

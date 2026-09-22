@@ -26,7 +26,7 @@ class StickerCategory {
 
 const List<StickerCategory> kStickerCategories = [
   StickerCategory('Greetings', '👋', [
-    StickerEntry('wave_hello', 'assets/stickers/wave_hello.png', 'Hello', [
+    StickerEntry('wave_hello', 'assets/stickers/wave_hello.webp', 'Hello', [
       'hello',
       'hi',
       'wave',
@@ -36,19 +36,19 @@ const List<StickerCategory> kStickerCategories = [
     ]),
     StickerEntry(
       'namaste_thanks',
-      'assets/stickers/namaste_thanks.png',
+      'assets/stickers/namaste_thanks.webp',
       'Thank you',
       ['namaste', 'thanks', 'thank you', 'pray', 'please', 'gratitude'],
     ),
     StickerEntry(
       'handshake_deal',
-      'assets/stickers/handshake_deal.png',
+      'assets/stickers/handshake_deal.webp',
       'Deal',
       ['handshake', 'deal', 'agree', 'welcome', 'nice to meet you'],
     ),
   ]),
   StickerCategory('Reactions', '😂', [
-    StickerEntry('laughing', 'assets/stickers/laughing.png', 'LOL', [
+    StickerEntry('laughing', 'assets/stickers/laughing.webp', 'LOL', [
       'laugh',
       'lol',
       'funny',
@@ -57,11 +57,11 @@ const List<StickerCategory> kStickerCategories = [
     ]),
     StickerEntry(
       'shocked_surprised',
-      'assets/stickers/shocked_surprised.png',
+      'assets/stickers/shocked_surprised.webp',
       'Shocked',
       ['shocked', 'surprised', 'omg', 'wow', 'mind blown', 'what'],
     ),
-    StickerEntry('thumbs_up', 'assets/stickers/thumbs_up.png', 'Nice', [
+    StickerEntry('thumbs_up', 'assets/stickers/thumbs_up.webp', 'Nice', [
       'thumbs up',
       'ok',
       'nice',
@@ -71,20 +71,20 @@ const List<StickerCategory> kStickerCategories = [
     ]),
     StickerEntry(
       'cool_sunglasses',
-      'assets/stickers/cool_sunglasses.png',
+      'assets/stickers/cool_sunglasses.webp',
       'Cool',
       ['cool', 'sunglasses', 'swag', 'awesome'],
     ),
   ]),
   StickerCategory('Love', '❤️', [
-    StickerEntry('love_heart', 'assets/stickers/love_heart.png', 'Love you', [
+    StickerEntry('love_heart', 'assets/stickers/love_heart.webp', 'Love you', [
       'love',
       'heart',
       'hug',
       'miss you',
       'like',
     ]),
-    StickerEntry('blowing_kiss', 'assets/stickers/blowing_kiss.png', 'Kiss', [
+    StickerEntry('blowing_kiss', 'assets/stickers/blowing_kiss.webp', 'Kiss', [
       'kiss',
       'love',
       'sweet',
@@ -92,14 +92,14 @@ const List<StickerCategory> kStickerCategories = [
     ]),
   ]),
   StickerCategory('Moods', '😴', [
-    StickerEntry('crying_sad', 'assets/stickers/crying_sad.png', 'Sad', [
+    StickerEntry('crying_sad', 'assets/stickers/crying_sad.webp', 'Sad', [
       'sad',
       'cry',
       'crying',
       'sorry',
       'upset',
     ]),
-    StickerEntry('sleeping', 'assets/stickers/sleeping.png', 'Sleepy', [
+    StickerEntry('sleeping', 'assets/stickers/sleeping.webp', 'Sleepy', [
       'sleep',
       'tired',
       'good night',
@@ -107,7 +107,7 @@ const List<StickerCategory> kStickerCategories = [
     ]),
     StickerEntry(
       'flexing_strong',
-      'assets/stickers/flexing_strong.png',
+      'assets/stickers/flexing_strong.webp',
       'Strong',
       ['strong', 'muscle', 'flex', 'gym', 'power'],
     ),
@@ -115,7 +115,7 @@ const List<StickerCategory> kStickerCategories = [
   StickerCategory('Celebrate', '🎉', [
     StickerEntry(
       'celebration_party',
-      'assets/stickers/celebration_party.png',
+      'assets/stickers/celebration_party.webp',
       'Party!',
       ['party', 'celebrate', 'congrats', 'birthday', 'yay', 'woohoo'],
     ),

@@ -154,8 +154,12 @@ class SarvamSpeechProvider implements SpeechProvider {
         '&mode=$mode'
         '&sample_rate=$sampleRate'
         '&encoding=linear16'
-        '&stream_type=balanced'
+        '&stream_type=fast'
         '&endpointing=vad'
+        '&threshold=0.25'
+        '&prefix_padding_ms=300'
+        '&silence_duration_ms=650'
+        '&min_speech_duration_ms=180'
         '&return_timestamps=false';
 
     final key = _pool.current;
@@ -224,11 +228,11 @@ class SarvamSpeechProvider implements SpeechProvider {
       final statusCode = parsed['status_code'] as int?;
       if (SarvamKeyPool.isKeyError(message: msg, closeCode: statusCode)) {
         _failoverAndRetry(key, message: msg, closeCode: statusCode);
-      } else if (parsed['is_fatal'] == true) {
-        _running = false;
-        _onError?.call(
-          msg.isEmpty ? 'Speech service rejected the session' : msg,
-        );
+      } else {
+        // A non-auth server error must never leave the UI stuck in
+        // Listening. Retry transport/session errors; surface only a clear
+        // message after the bounded retry budget is exhausted.
+        _handleTransportDrop(key);
       }
     }
   }
