@@ -348,6 +348,32 @@ class SettingsPanel extends StatelessWidget {
                 ListTile(
                   dense: true,
                   title: Text(
+                    'Key response speed',
+                    style: TextStyle(fontSize: 13, color: t.keyText),
+                  ),
+                  subtitle: Text(
+                    kb.keyResponseMs <= 10
+                        ? 'Instant visual response'
+                        : '${kb.keyResponseMs.round()} ms press animation',
+                    style: TextStyle(fontSize: 11, color: t.keyTextSecondary),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                  titleAlignment: ListTileTitleAlignment.top,
+                  trailing: SizedBox(
+                    width: 150,
+                    child: Slider(
+                      min: 0,
+                      max: 120,
+                      divisions: 12,
+                      value: kb.keyResponseMs,
+                      activeColor: t.accent,
+                      onChanged: kb.setKeyResponseMs,
+                    ),
+                  ),
+                ),
+                ListTile(
+                  dense: true,
+                  title: Text(
                     'Enter key action (demo)',
                     style: TextStyle(fontSize: 13, color: t.keyText),
                   ),

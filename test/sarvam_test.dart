@@ -104,5 +104,14 @@ void main() {
         expect(p.voiceAvailable, isTrue, reason: 'pack ${p.id}');
       }
     });
+
+    test('every language has a valid translation code', () {
+      for (final source in LanguageRegistry.all) {
+        for (final target in LanguageRegistry.all) {
+          expect(source.translationCode, matches(RegExp(r'^[a-z]{2,3}-IN$')));
+          expect(target.translationCode, matches(RegExp(r'^[a-z]{2,3}-IN$')));
+        }
+      }
+    });
   });
 }

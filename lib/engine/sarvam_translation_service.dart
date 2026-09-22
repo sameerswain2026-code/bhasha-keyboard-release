@@ -15,7 +15,10 @@ class SarvamTranslationService {
       _client = client ?? http.Client();
 
   static final Uri _endpoint = Uri.parse('https://api.sarvam.ai/translate');
-  static const Duration _timeout = Duration(seconds: 8);
+  // Keep the keyboard responsive: a slow translation request should quickly
+  // fall back to the local/secondary path instead of holding the finalized
+  // voice segment for eight seconds.
+  static const Duration _timeout = Duration(seconds: 3);
   final SarvamKeyPool _pool;
   final http.Client _client;
 
@@ -39,14 +42,10 @@ class SarvamTranslationService {
       'source_language_code': source.translationCode,
       'target_language_code': target.translationCode,
       'model': 'sarvam-translate:v1',
-      'mode': 'formal',
     };
-    // Sarvam returns native script for Indic targets. English can explicitly
-    // request Roman output; native output for English is handled by the
-    // caller's normal keyboard script path.
-    if (target.id == 'en' && outputStyle == ScriptMode.roman) {
-      payload['output_script'] = 'roman';
-    }
+    // Sarvam Translate v1 returns the target language in its native form.
+    // `output_script` is not supported by this endpoint; script styling is
+    // handled by the caller after translation.
 
     for (var attempt = 0; attempt < _pool.length; attempt++) {
       final key = _pool.current;

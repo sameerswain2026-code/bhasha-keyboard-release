@@ -3,6 +3,8 @@ package com.bhasha.keyboard
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
@@ -14,6 +16,7 @@ class SpeechStreamHandler(private val context: Context) : EventChannel.StreamHan
     private var sink: EventChannel.EventSink? = null
     private var recognizer: SpeechRecognizer? = null
     private var listening = false
+    private val mainHandler = Handler(Looper.getMainLooper())
 
     override fun onListen(arguments: Any?, events: EventChannel.EventSink?) {
         sink = events
@@ -37,10 +40,20 @@ class SpeechStreamHandler(private val context: Context) : EventChannel.StreamHan
             override fun onBeginningOfSpeech() {}
             override fun onRmsChanged(rmsdB: Float) {}
             override fun onBufferReceived(buffer: ByteArray?) {}
-            override fun onEndOfSpeech() { listening = false }
+            // Keep the session armed. Android calls onEndOfSpeech before
+            // onResults; clearing this flag here prevented continuous voice
+            // typing from restarting after the first utterance.
+            override fun onEndOfSpeech() {}
             override fun onError(error: Int) {
-                listening = false
-                if (error != SpeechRecognizer.ERROR_CLIENT) {
+                if (!listening) return
+                if (isRecoverable(error)) {
+                    // ERROR_NO_MATCH / SPEECH_TIMEOUT is normal silence, not
+                    // a user-visible failure. Re-arm listening quietly.
+                    mainHandler.postDelayed({
+                        if (listening) startListening(localeTag)
+                    }, 220L)
+                } else {
+                    listening = false
                     sink?.success(mapOf("error" to readableError(error)))
                 }
             }
@@ -80,6 +93,7 @@ class SpeechStreamHandler(private val context: Context) : EventChannel.StreamHan
 
     fun stopSpeech() {
         listening = false
+        mainHandler.removeCallbacksAndMessages(null)
         try { recognizer?.stopListening() } catch (_: Exception) {}
         try { recognizer?.cancel() } catch (_: Exception) {}
         recognizer?.destroy()
@@ -93,5 +107,14 @@ class SpeechStreamHandler(private val context: Context) : EventChannel.StreamHan
         SpeechRecognizer.ERROR_NO_MATCH -> "No speech heard"
         SpeechRecognizer.ERROR_RECOGNIZER_BUSY -> "Speech recognizer is busy"
         else -> "Speech recognition unavailable"
+    }
+
+    private fun isRecoverable(code: Int): Boolean = when (code) {
+        SpeechRecognizer.ERROR_NO_MATCH,
+        SpeechRecognizer.ERROR_SPEECH_TIMEOUT,
+        SpeechRecognizer.ERROR_NETWORK,
+        SpeechRecognizer.ERROR_NETWORK_TIMEOUT,
+        SpeechRecognizer.ERROR_RECOGNIZER_BUSY -> true
+        else -> false
     }
 }

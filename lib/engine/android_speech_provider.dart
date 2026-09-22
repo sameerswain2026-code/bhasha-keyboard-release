@@ -54,7 +54,9 @@ class AndroidSpeechProvider implements SpeechProvider {
     unawaited(
       _control
           .invokeMethod<void>('startSpeech', {
-            'locale': _pack?.locale ?? 'en-IN',
+            'locale': (_pack?.locale == null || _pack!.locale == 'unknown')
+                ? 'en-IN'
+                : _pack!.locale,
           })
           .catchError((_) {
             _onError?.call('Speech recognition unavailable');
@@ -137,13 +139,10 @@ class ResilientSpeechProvider implements SpeechProvider {
     if (_target != null) provider.setTranslateTarget(_target!);
     provider.setErrorHandler((message) {
       if (identical(provider, _primary) && !_fallbackStarted && _pack != null) {
-        // Android SpeechRecognizer only transcribes one locale. It cannot
-        // implement Sarvam Translate or Auto Mix; falling back here would
-        // insert unrelated English text after a realtime API failure.
-        if (_micMode == MicMode.autoMix || _micMode == MicMode.translate) {
-          _onError?.call(message);
-          return;
-        }
+        // Android SpeechRecognizer is not multilingual/translated like
+        // Sarvam, but it is still a useful live fallback. The controller's
+        // existing translate pipeline can post-process its source text, and
+        // Auto mode is better served by real speech than a dead spinner.
         _fallbackStarted = true;
         unawaited(_primary.stop());
         _wire(_fallback);

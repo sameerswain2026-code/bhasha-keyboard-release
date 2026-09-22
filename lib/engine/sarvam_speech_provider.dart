@@ -296,8 +296,10 @@ class SarvamSpeechProvider implements SpeechProvider {
     if (sock != null && sock.readyState == WebSocket.open) {
       try {
         sock.add(jsonEncode({'event': 'end'}));
-        // Give the server a brief window to emit the final transcript.
-        await Future<void>.delayed(const Duration(milliseconds: 800));
+        // Give the server a short window to emit the final transcript. The
+        // old 800 ms grace period made every manual stop feel delayed; VAD
+        // already emits partial/final segments continuously.
+        await Future<void>.delayed(const Duration(milliseconds: 250));
       } catch (_) {}
     }
     await _micSub?.cancel();

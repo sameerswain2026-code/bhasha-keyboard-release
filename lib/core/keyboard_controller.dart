@@ -69,8 +69,10 @@ const LanguagePack _autoMixLanguagePack = LanguagePack(
   locale: 'unknown',
   family: ScriptFamily.latin,
   // Sarvam realtime accepts `auto` for adaptive multilingual detection;
-  // `unknown` is rejected as an unsupported language_code.
-  sarvamCodeOverride: 'auto',
+  // Sarvam uses `unknown` for automatic detection across its supported
+  // Indian languages. `auto` is not the documented value and caused the
+  // realtime path to behave inconsistently outside English/Hindi.
+  sarvamCodeOverride: 'unknown',
 );
 
 class KeyboardController extends ChangeNotifier {
@@ -310,6 +312,14 @@ class KeyboardController extends ChangeNotifier {
   bool get hapticsEnabled => _hapticsEnabled;
   bool _soundEnabled = false;
   bool get soundEnabled => _soundEnabled;
+  double _keyResponseMs = 35;
+  double get keyResponseMs => _keyResponseMs;
+
+  void setKeyResponseMs(double value) {
+    _keyResponseMs = value.clamp(0, 120).toDouble();
+    _persist('keyResponseMs', _keyResponseMs.toString());
+    notifyListeners();
+  }
 
   // ---- Suggestions ----
   List<String> _suggestionList = [];
@@ -343,6 +353,7 @@ class KeyboardController extends ChangeNotifier {
   /// falls back to the shadow-editor-based [_performDelete].
   Future<bool> Function()? hostSelectionDeleter;
   Future<String?> Function()? hostSelectedTextReader;
+  Future<String?> Function()? hostClipboardReader;
   Future<void> Function(String text)? hostSelectionReplacer;
   Future<void> Function(String text, String locale)? hostTextSpeaker;
   Future<void> Function(String source, String mimeType, String title)?
@@ -630,7 +641,15 @@ class KeyboardController extends ChangeNotifier {
   Future<void> pasteIntoPanelFromClipboard() async {
     String? text;
     try {
-      text = (await Clipboard.getData(Clipboard.kTextPlain))?.text;
+      text = await hostClipboardReader?.call();
+    } catch (_) {}
+    if (text == null || text.trim().isEmpty) {
+      try {
+        text = await hostSelectedTextReader?.call();
+      } catch (_) {}
+    }
+    try {
+      text ??= (await Clipboard.getData(Clipboard.kTextPlain))?.text;
     } catch (_) {}
     text ??= _clipboardHistory.isNotEmpty ? _clipboardHistory.first : null;
     if (text == null || text.trim().isEmpty) return;
@@ -766,6 +785,11 @@ class KeyboardController extends ChangeNotifier {
       if (sizeScaleStr != null) {
         final parsed = double.tryParse(sizeScaleStr);
         if (parsed != null) _sizeScale = parsed.clamp(0.82, 1.18);
+      }
+      final keyResponseStr = prefs.getString('keyResponseMs');
+      if (keyResponseStr != null) {
+        final parsed = double.tryParse(keyResponseStr);
+        if (parsed != null) _keyResponseMs = parsed.clamp(0, 120).toDouble();
       }
       final oneHandedName = prefs.getString('oneHandedSide');
       if (oneHandedName != null) {
@@ -1574,7 +1598,7 @@ class KeyboardController extends ChangeNotifier {
   void _feedback() {
     if (_hapticsEnabled) {
       try {
-        HapticFeedback.lightImpact();
+        HapticFeedback.selectionClick();
       } catch (_) {}
     }
     if (_soundEnabled) {
@@ -1590,14 +1614,15 @@ class KeyboardController extends ChangeNotifier {
 
   /// The language the mic should recognize speech in, per the currently
   /// EFFECTIVE mode ([micMode], not the raw stored [_micMode]):
-  /// - Translate: the saved Source language.
-  /// - Auto: a synthetic multilingual pack (Sarvam auto-detects).
+  /// - Translate: a synthetic multilingual pack so Sarvam can detect any
+  ///   supported source language before translating it.
+  /// - Auto: the same synthetic multilingual pack.
   LanguagePack get _voiceRecognitionLanguage {
     switch (micMode) {
       case MicMode.transcribe:
         return _autoMixLanguagePack;
       case MicMode.translate:
-        return _translateSource;
+        return _autoMixLanguagePack;
       case MicMode.autoMix:
         return _autoMixLanguagePack;
     }
@@ -1823,7 +1848,7 @@ class KeyboardController extends ChangeNotifier {
   /// for the provider's network flush window: that made every key appear
   /// unresponsive while listening. The key-interaction path discards the
   /// partial voice result and stops the provider asynchronously.
-  Future<void> keyPressedDuringVoice() async {
+  void keyPressedDuringVoice() {
     if (voice.isActive) {
       voice.cancelForKeyPress();
     }

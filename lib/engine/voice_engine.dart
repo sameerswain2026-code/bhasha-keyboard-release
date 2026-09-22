@@ -143,7 +143,7 @@ class SimulatedSpeechProvider implements SpeechProvider {
     _phraseIndex++;
     final words = phrase.split(' ');
     _wordIndex = 0;
-    _timer = Timer.periodic(const Duration(milliseconds: 420), (t) {
+    _timer = Timer.periodic(const Duration(milliseconds: 180), (t) {
       if (_wordIndex < words.length) {
         _wordIndex++;
         final partial = words.take(_wordIndex).join(' ');

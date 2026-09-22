@@ -19,6 +19,7 @@ class ImeBridge {
     _channel.setMethodCallHandler(_onNativeCall);
     kb.hostSelectionDeleter = _deleteHostSelection;
     kb.hostSelectedTextReader = getHostSelectedText;
+    kb.hostClipboardReader = getClipboardText;
     kb.hostSelectionReplacer = replaceHostSelectedText;
     kb.hostTextSpeaker = speakText;
     kb.hostMediaSharer = shareMedia;
@@ -253,6 +254,15 @@ class ImeBridge {
     try {
       await _channel.invokeMethod('replaceSelectedText', {'text': text});
     } catch (_) {}
+  }
+
+  Future<String?> getClipboardText() async {
+    try {
+      final text = await _channel.invokeMethod<String>('getClipboardText');
+      return text?.trim().isEmpty == true ? null : text;
+    } catch (_) {
+      return null;
+    }
   }
 
   Future<void> speakText(String text, String locale) async {

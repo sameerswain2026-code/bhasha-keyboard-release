@@ -53,6 +53,7 @@ class KeyboardView extends StatelessWidget {
   Widget build(BuildContext context) {
     final kb = context.watch<KeyboardController>();
     final t = KbTheme.of(context);
+    KeyWidget.feedbackDurationMs = kb.keyResponseMs;
 
     final panelOpen = kb.panel != ActivePanel.none;
 
@@ -450,30 +451,22 @@ class _Toolbar extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 4),
       child: Row(
         children: [
-          if (hasDynamicContent) ...[
-            Expanded(
-              flex: 1,
-              child: Center(
-                child: _ToolbarButton(
-                  icon: Icons.apps,
-                  tooltip: 'Menu',
-                  selected: kb.panel == ActivePanel.menu,
-                  onTap: () => kb.togglePanel(ActivePanel.menu),
-                ),
-              ),
-            ),
-            Expanded(flex: 3, child: _DynamicStatusOrSuggestions(kb: kb)),
-          ] else ...[
-            iconSlot(Icons.apps, ActivePanel.menu, 'Menu'),
-            iconSlot(Icons.content_paste, ActivePanel.clipboard, 'Clipboard'),
-            iconSlot(
-              Icons.translate,
-              ActivePanel.translateConfig,
-              'Voice Translate',
-              onTap: kb.openTranslateConfig,
-            ),
-            iconSlot(Icons.settings_outlined, ActivePanel.settings, 'Settings'),
-          ],
+          // Keep navigation icons permanently available. Suggestions and
+          // voice status use only the centre slot instead of replacing
+          // Settings/Translate when a snippet or dictionary match appears.
+          iconSlot(Icons.apps, ActivePanel.menu, 'Menu'),
+          iconSlot(Icons.content_paste, ActivePanel.clipboard, 'Clipboard'),
+          Expanded(
+            flex: hasDynamicContent ? 2 : 1,
+            child: _DynamicStatusOrSuggestions(kb: kb),
+          ),
+          iconSlot(
+            Icons.translate,
+            ActivePanel.translateConfig,
+            'Voice Translate',
+            onTap: kb.openTranslateConfig,
+          ),
+          iconSlot(Icons.settings_outlined, ActivePanel.settings, 'Settings'),
           Expanded(
             flex: 1,
             child: Center(child: MicIndicator(kb: kb)),
@@ -731,35 +724,46 @@ class _DynamicStatusOrSuggestions extends StatelessWidget {
       );
     } else {
       final list = kb.suggestionList;
-      child = Row(
-        key: const ValueKey('suggestions'),
-        children: [
-          for (int i = 0; i < list.length; i++) ...[
-            if (i > 0) Container(width: 1, height: 18, color: t.border),
-            Expanded(
-              child: InkWell(
-                onTap: () => kb.applySuggestion(list[i]),
-                child: Center(
-                  child: Text(
-                    list[i],
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: i == 0 ? FontWeight.w600 : FontWeight.w400,
-                      color: t.suggestionText,
+      child = ClipRect(
+        child: Row(
+          key: const ValueKey('suggestions'),
+          children: [
+            for (int i = 0; i < list.length; i++) ...[
+              if (i > 0) Container(width: 1, height: 18, color: t.border),
+              Expanded(
+                child: InkWell(
+                  onTap: () => kb.applySuggestion(list[i]),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 6),
+                    child: Center(
+                      child: Text(
+                        list[i],
+                        maxLines: 1,
+                        softWrap: false,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: i == 0
+                              ? FontWeight.w600
+                              : FontWeight.w400,
+                          color: t.suggestionText,
+                        ),
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
+            ],
           ],
-        ],
+        ),
       );
     }
 
     return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 160),
+      duration: const Duration(milliseconds: 70),
+      layoutBuilder: (currentChild, previousChildren) =>
+          currentChild ?? const SizedBox.shrink(),
       child: child,
     );
   }
@@ -825,7 +829,7 @@ class _AlphaLayer extends StatelessWidget {
   const _AlphaLayer({required this.kb});
 
   Future<void> _key(String c) async {
-    await kb.keyPressedDuringVoice();
+    kb.keyPressedDuringVoice();
     kb.insertText(c);
   }
 
@@ -844,7 +848,7 @@ class _AlphaLayer extends StatelessWidget {
 
     String display(String c) => (isLatin && shiftActive) ? c.toUpperCase() : c;
 
-    final fontSize = isLatin ? 21.0 : 19.0;
+    final fontSize = isLatin ? 22.0 : 20.0;
 
     final scale = kb.sizeScale;
 
@@ -889,7 +893,7 @@ class _AlphaLayer extends StatelessWidget {
                 flex: 3,
                 heightScale: scale,
                 onTap: () async {
-                  await kb.keyPressedDuringVoice();
+                  kb.keyPressedDuringVoice();
                   kb.tapShift();
                 },
               ),
@@ -907,16 +911,16 @@ class _AlphaLayer extends StatelessWidget {
                 flex: 3,
                 heightScale: scale,
                 onTap: () async {
-                  await kb.keyPressedDuringVoice();
+                  kb.keyPressedDuringVoice();
                   kb.deleteBackward();
                 },
                 onLongPressStart: () async {
-                  await kb.keyPressedDuringVoice();
+                  kb.keyPressedDuringVoice();
                   kb.startContinuousDelete();
                 },
                 onLongPressEnd: kb.stopContinuousDelete,
                 onHorizontalDragStart: () async {
-                  await kb.keyPressedDuringVoice();
+                  kb.keyPressedDuringVoice();
                   kb.startSwipeDelete();
                 },
                 onHorizontalDragUpdate: kb.updateSwipeDelete,
@@ -956,7 +960,7 @@ class _GridLayer extends StatelessWidget {
                   label: c,
                   heightScale: scale,
                   onTap: () async {
-                    await kb.keyPressedDuringVoice();
+                    kb.keyPressedDuringVoice();
                     kb.insertText(c);
                   },
                 ),
@@ -971,7 +975,7 @@ class _GridLayer extends StatelessWidget {
                   flex: 2,
                   heightScale: scale,
                   onTap: () async {
-                    await kb.keyPressedDuringVoice();
+                    kb.keyPressedDuringVoice();
                     kb.insertText(c);
                   },
                 ),
@@ -996,7 +1000,7 @@ class _GridLayer extends StatelessWidget {
                   flex: 2,
                   heightScale: scale,
                   onTap: () async {
-                    await kb.keyPressedDuringVoice();
+                    kb.keyPressedDuringVoice();
                     kb.insertText(c);
                   },
                 ),
@@ -1006,16 +1010,16 @@ class _GridLayer extends StatelessWidget {
                 flex: 3,
                 heightScale: scale,
                 onTap: () async {
-                  await kb.keyPressedDuringVoice();
+                  kb.keyPressedDuringVoice();
                   kb.deleteBackward();
                 },
                 onLongPressStart: () async {
-                  await kb.keyPressedDuringVoice();
+                  kb.keyPressedDuringVoice();
                   kb.startContinuousDelete();
                 },
                 onLongPressEnd: kb.stopContinuousDelete,
                 onHorizontalDragStart: () async {
-                  await kb.keyPressedDuringVoice();
+                  kb.keyPressedDuringVoice();
                   kb.startSwipeDelete();
                 },
                 onHorizontalDragUpdate: kb.updateSwipeDelete,
@@ -1066,7 +1070,7 @@ class _BottomRow extends StatelessWidget {
           flex: 3,
           heightScale: scale,
           onTap: () async {
-            await kb.keyPressedDuringVoice();
+            kb.keyPressedDuringVoice();
             kb.setLayer(isAlpha ? KeyboardLayer.numeric : KeyboardLayer.alpha);
           },
         ),
@@ -1096,7 +1100,7 @@ class _BottomRow extends StatelessWidget {
                 kb.setScriptMode(next);
               }
             } else {
-              await kb.keyPressedDuringVoice();
+              kb.keyPressedDuringVoice();
               kb.insertText(',');
             }
           },
@@ -1121,7 +1125,7 @@ class _BottomRow extends StatelessWidget {
           flex: 2,
           heightScale: scale,
           onTap: () async {
-            await kb.keyPressedDuringVoice();
+            kb.keyPressedDuringVoice();
             kb.togglePanel(ActivePanel.emoji);
           },
         ),
@@ -1134,7 +1138,7 @@ class _BottomRow extends StatelessWidget {
           flex: 8,
           heightScale: scale,
           onTap: () async {
-            await kb.keyPressedDuringVoice();
+            kb.keyPressedDuringVoice();
             kb.insertText(' ');
           },
           onLongPressStart: () => kb.togglePanel(ActivePanel.language),
@@ -1144,7 +1148,7 @@ class _BottomRow extends StatelessWidget {
           flex: 2,
           heightScale: scale,
           onTap: () async {
-            await kb.keyPressedDuringVoice();
+            kb.keyPressedDuringVoice();
             kb.insertText('.');
           },
         ),
@@ -1154,7 +1158,7 @@ class _BottomRow extends StatelessWidget {
           flex: 3,
           heightScale: scale,
           onTap: () async {
-            await kb.keyPressedDuringVoice();
+            kb.keyPressedDuringVoice();
             kb.pressEnter();
           },
         ),

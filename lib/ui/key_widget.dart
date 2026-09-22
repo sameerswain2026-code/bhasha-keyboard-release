@@ -6,6 +6,9 @@ import 'package:flutter/material.dart';
 import 'kb_theme.dart';
 
 class KeyWidget extends StatefulWidget {
+  /// Global visual response speed controlled from Settings. Input itself is
+  /// always synchronous; this only changes the pressed-state animation.
+  static double feedbackDurationMs = 35;
   final String? label;
   final IconData? icon;
   final VoidCallback? onTap;
@@ -98,8 +101,12 @@ class _KeyWidgetState extends State<KeyWidget> {
                   widget.onLongPressEnd!.call();
                 },
           child: AnimatedContainer(
-            duration: const Duration(milliseconds: 35),
-            // Base height raised from 46 -> 55: the standalone language
+            duration: Duration(
+              milliseconds: KeyWidget.feedbackDurationMs.round().clamp(0, 120),
+            ),
+            // Base height raised from 46 -> 58 so the default layout has
+            // Gboard-like touch targets while still fitting the fixed IME
+            // height budget. The standalone language
             // sub-bar row beneath the toolbar was removed (spec item 2),
             // and that reclaimed vertical space is redistributed into
             // the keys themselves rather than left empty, while the
@@ -108,10 +115,9 @@ class _KeyWidgetState extends State<KeyWidget> {
             //
             // Budget check (4 key rows, each wrapped in EdgeInsets.all(1.5)
             // padding, inside an outer Padding.fromLTRB(2,2,2,4)):
-            //   4 * (55 + 3) + 6 = 238, which fits within the 246dp
-            //   `_kBodyHeight` budget with a few dp of margin to spare.
-            //   (56 was tried first and overflowed by ~4dp - see history.)
-            height: 55 * widget.heightScale,
+            //   4 * (58 + 2) + 6 = 246, which fills the `_kBodyHeight`
+            //   budget without shrinking the hit targets.
+            height: 58 * widget.heightScale,
             decoration: BoxDecoration(
               color: bg,
               borderRadius: BorderRadius.circular(8),

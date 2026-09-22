@@ -19,7 +19,8 @@ class MicIndicator extends StatelessWidget {
     if (kb.micMode == MicMode.translate) {
       return _IndicatorButton(
         icon: Icons.g_translate,
-        tooltip: '${kb.translateSource.englishName} -> ${kb.translateTarget.englishName}',
+        tooltip:
+            '${kb.translateSource.englishName} -> ${kb.translateTarget.englishName}',
         selected: kb.panel == ActivePanel.translateConfig,
         onTap: kb.openTranslateConfig,
       );
@@ -54,10 +55,16 @@ class _IndicatorButton extends StatelessWidget {
           height: 34,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: selected ? theme.accent.withValues(alpha: 0.18) : Colors.transparent,
+            color: selected
+                ? theme.accent.withValues(alpha: 0.18)
+                : Colors.transparent,
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Icon(icon, size: 19, color: selected ? theme.accent : theme.icon),
+          child: Icon(
+            icon,
+            size: 19,
+            color: selected ? theme.accent : theme.icon,
+          ),
         ),
       ),
     );
@@ -72,7 +79,12 @@ class _AutoButton extends StatelessWidget {
   Future<void> _showChoices(BuildContext context, Offset position) async {
     final selected = await showMenu<ScriptMode>(
       context: context,
-      position: RelativeRect.fromLTRB(position.dx, position.dy - 90, position.dx, 0),
+      position: RelativeRect.fromLTRB(
+        position.dx,
+        position.dy - 90,
+        position.dx,
+        0,
+      ),
       items: [
         _choice(ScriptMode.roman, 'Roman (abc)'),
         _choice(ScriptMode.native, 'Native script'),
@@ -102,24 +114,32 @@ class _AutoButton extends StatelessWidget {
     return InkWell(
       borderRadius: BorderRadius.circular(8),
       onTapDown: (details) => _showChoices(context, details.globalPosition),
-      child: Container(
-        height: 34,
-        padding: const EdgeInsets.symmetric(horizontal: 8),
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: theme.accent.withValues(alpha: 0.14),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.auto_awesome, size: 16, color: theme.accent),
-            const SizedBox(width: 4),
-            Text(
-              'Auto',
-              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: theme.accent),
-            ),
-          ],
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 66, minWidth: 52),
+        child: Container(
+          height: 34,
+          padding: const EdgeInsets.symmetric(horizontal: 5),
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: theme.accent.withValues(alpha: 0.14),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.auto_awesome, size: 15, color: theme.accent),
+              const SizedBox(width: 3),
+              Text(
+                'Auto',
+                maxLines: 1,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: theme.accent,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
