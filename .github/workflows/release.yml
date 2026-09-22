@@ -42,15 +42,27 @@ jobs:
         env:
           GEMINI_API_KEYS: ${{ secrets.GEMINI_API_KEYS }}
           SARVAM_API_KEYS: ${{ secrets.SARVAM_API_KEYS }}
+          SARVAM_API_KEY_1: ${{ secrets.SARVAM_API_KEY_1 }}
+          SARVAM_API_KEY_2: ${{ secrets.SARVAM_API_KEY_2 }}
+          SARVAM_API_KEY_3: ${{ secrets.SARVAM_API_KEY_3 }}
+          SARVAM_API_KEY_4: ${{ secrets.SARVAM_API_KEY_4 }}
+          SARVAM_API_KEY_5: ${{ secrets.SARVAM_API_KEY_5 }}
           TAVILY_API_KEYS: ${{ secrets.TAVILY_API_KEYS }}
         run: |
+          # Accept the existing comma/newline-separated pool or five separate
+          # secrets. Do not print key values; only the count is logged.
+          SARVAM_BUILD_KEYS="$(printf '%s\n' "$SARVAM_API_KEYS" "$SARVAM_API_KEY_1" "$SARVAM_API_KEY_2" "$SARVAM_API_KEY_3" "$SARVAM_API_KEY_4" "$SARVAM_API_KEY_5" | tr '\r\n' ',')"
+          SARVAM_BUILD_KEYS="$(printf '%s' "$SARVAM_BUILD_KEYS" | sed -E 's/,+/,/g; s/^,+//; s/,+$//')"
+          SARVAM_KEY_COUNT="$(printf '%s' "$SARVAM_BUILD_KEYS" | awk -F',' '{n=0; for (i=1; i<=NF; i++) if ($i ~ /[^[:space:]]/) n++; print n}')"
+          test "$SARVAM_KEY_COUNT" -ge 1 || { echo 'SARVAM_API_KEYS is empty; refusing to build a mic-disabled release.'; exit 1; }
+          echo "Sarvam key pool configured: $SARVAM_KEY_COUNT key(s)"
           flutter build apk --release --split-per-abi \
             --dart-define="GEMINI_API_KEYS=$GEMINI_API_KEYS" \
-            --dart-define="SARVAM_API_KEYS=$SARVAM_API_KEYS" \
+            --dart-define="SARVAM_API_KEYS=$SARVAM_BUILD_KEYS" \
             --dart-define="TAVILY_API_KEYS=$TAVILY_API_KEYS"
           flutter build appbundle --release \
             --dart-define="GEMINI_API_KEYS=$GEMINI_API_KEYS" \
-            --dart-define="SARVAM_API_KEYS=$SARVAM_API_KEYS" \
+            --dart-define="SARVAM_API_KEYS=$SARVAM_BUILD_KEYS" \
             --dart-define="TAVILY_API_KEYS=$TAVILY_API_KEYS"
       - name: Upload signed ARM64 APK
         uses: actions/upload-artifact@v4
