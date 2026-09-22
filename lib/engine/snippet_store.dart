@@ -74,3 +74,71 @@ class LocalSnippetStore {
       .trim()
       .replaceAll(RegExp(r'\s+'), ' ');
 }
+
+/// Personal pronunciation/accent dictionary. The left side is what speech
+/// recognition commonly returns; the right side is the user's preferred
+/// spelling. It is deliberately separate from snippets: dictionary entries
+/// correct recognized words, while snippets expand shortcuts into full text.
+class DictionaryEntry {
+  const DictionaryEntry({required this.heard, required this.preferred});
+
+  final String heard;
+  final String preferred;
+
+  Map<String, String> toJson() => {'heard': heard, 'preferred': preferred};
+
+  static DictionaryEntry? fromJson(Object? value) {
+    if (value is! Map) return null;
+    final heard = value['heard']?.toString().trim() ?? '';
+    final preferred = value['preferred']?.toString() ?? '';
+    if (heard.isEmpty || preferred.isEmpty) return null;
+    return DictionaryEntry(heard: heard, preferred: preferred);
+  }
+}
+
+class LocalDictionary {
+  final List<DictionaryEntry> _items = [];
+
+  List<DictionaryEntry> get items => List.unmodifiable(_items);
+
+  void restore(Iterable<DictionaryEntry> values) {
+    _items
+      ..clear()
+      ..addAll(values.take(200));
+  }
+
+  void put(String heard, String preferred) {
+    final left = heard.trim();
+    final right = preferred.trim();
+    if (left.isEmpty || right.isEmpty) return;
+    final key = LocalSnippetStore.normalize(left);
+    _items.removeWhere(
+      (item) => LocalSnippetStore.normalize(item.heard) == key,
+    );
+    _items.insert(0, DictionaryEntry(heard: left, preferred: right));
+    if (_items.length > 200) _items.removeLast();
+  }
+
+  void remove(String heard) {
+    final key = LocalSnippetStore.normalize(heard);
+    _items.removeWhere(
+      (item) => LocalSnippetStore.normalize(item.heard) == key,
+    );
+  }
+
+  String apply(String input) {
+    var output = input;
+    final exact = LocalSnippetStore.normalize(input);
+    for (final item in _items) {
+      if (LocalSnippetStore.normalize(item.heard) == exact)
+        return item.preferred;
+    }
+    for (final item in _items) {
+      output = output.replaceAll(
+        RegExp(RegExp.escape(item.heard), caseSensitive: false),
+        item.preferred,
+      );
+    }
+    return output;
+  }
+}

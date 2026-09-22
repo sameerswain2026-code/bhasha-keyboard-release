@@ -158,6 +158,12 @@ class BhashaImeService : InputMethodService() {
                         requestHideSelf(0)
                         result.success(true)
                     }
+                    "openManagementApp" -> {
+                        startActivity(Intent(this, MainActivity::class.java).apply {
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        })
+                        result.success(true)
+                    }
                     "deleteHostSelection" -> {
                         result.success(deleteHostSelection())
                     }

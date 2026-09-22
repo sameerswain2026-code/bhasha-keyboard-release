@@ -2,6 +2,7 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/keyboard_controller.dart';
@@ -11,52 +12,10 @@ import 'panel_mini_keyboard.dart';
 class SnippetsPanel extends StatelessWidget {
   const SnippetsPanel({super.key});
 
-  Future<void> _add(BuildContext context, KeyboardController kb) async {
-    final alias = TextEditingController();
-    final value = TextEditingController();
-    final result = await showDialog<List<String>>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Add snippet'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: alias,
-              autofocus: true,
-              decoration: const InputDecoration(
-                labelText: 'Shortcut or voice phrase',
-                hintText: 'email id one',
-              ),
-            ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: value,
-              maxLines: 4,
-              decoration: const InputDecoration(
-                labelText: 'Text to insert',
-                hintText: 'name@example.com',
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(dialogContext, [alias.text, value.text]),
-            child: const Text('Save'),
-          ),
-        ],
-      ),
-    );
-    alias.dispose();
-    value.dispose();
-    if (result != null && result.length == 2) {
-      kb.saveSnippet(result[0], result[1]);
-    }
+  Future<void> _openApp() async {
+    try {
+      await const MethodChannel('bhasha/ime').invokeMethod('openManagementApp');
+    } catch (_) {}
   }
 
   @override
@@ -86,7 +45,7 @@ class SnippetsPanel extends StatelessWidget {
                 ),
                 IconButton(
                   tooltip: 'Add snippet',
-                  onPressed: () => _add(context, kb),
+                  onPressed: _openApp,
                   icon: Icon(Icons.add, color: theme.accent),
                 ),
               ],
@@ -97,6 +56,17 @@ class SnippetsPanel extends StatelessWidget {
             child: Text(
               'Say or type the shortcut to insert your saved text. Stored only on this device.',
               style: TextStyle(fontSize: 11, color: theme.keyTextSecondary),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 2, 12, 8),
+            child: SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: _openApp,
+                icon: const Icon(Icons.open_in_new),
+                label: const Text('Open full editor in app'),
+              ),
             ),
           ),
           Expanded(
@@ -117,7 +87,10 @@ class SnippetsPanel extends StatelessWidget {
                         color: theme.keyBg,
                         child: ListTile(
                           dense: true,
-                          title: Text(item.alias, style: TextStyle(color: theme.keyText)),
+                          title: Text(
+                            item.alias,
+                            style: TextStyle(color: theme.keyText),
+                          ),
                           subtitle: Text(
                             item.value,
                             maxLines: 2,
@@ -127,7 +100,10 @@ class SnippetsPanel extends StatelessWidget {
                           trailing: IconButton(
                             tooltip: 'Delete',
                             onPressed: () => kb.deleteSnippet(item.alias),
-                            icon: Icon(Icons.delete_outline, color: theme.keyTextSecondary),
+                            icon: Icon(
+                              Icons.delete_outline,
+                              color: theme.keyTextSecondary,
+                            ),
                           ),
                           onTap: () {
                             kb.insertContent(item.value);

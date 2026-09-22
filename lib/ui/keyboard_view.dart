@@ -28,6 +28,7 @@ import 'kb_theme.dart';
 import 'key_widget.dart';
 import 'mic_indicator.dart';
 import 'panels/clipboard_panel.dart';
+import 'panels/dictionary_panel.dart';
 import 'panels/emoji_panel.dart';
 import 'panels/gif_panel.dart';
 import 'panels/language_panel.dart';
@@ -92,6 +93,8 @@ class KeyboardView extends StatelessWidget {
         return const TextEditingPanel();
       case ActivePanel.snippets:
         return const SnippetsPanel();
+      case ActivePanel.dictionary:
+        return const DictionaryPanel();
       case ActivePanel.resize:
         return const ResizePanel();
       case ActivePanel.translateConfig:

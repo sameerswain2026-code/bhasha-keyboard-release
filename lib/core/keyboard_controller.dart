@@ -40,6 +40,7 @@ enum ActivePanel {
   sticker,
   textEditing,
   snippets,
+  dictionary,
   resize,
   translateConfig, // Translate Configuration Page (source/target/style + Save)
   clipboard,
@@ -105,9 +106,11 @@ class KeyboardController extends ChangeNotifier {
   final VoiceEngine voice;
   final SuggestionEngine suggestions = SuggestionEngine();
   final LocalSnippetStore snippets = LocalSnippetStore();
+  final LocalDictionary dictionary = LocalDictionary();
   final WritingAssistant writingAssistant = const WritingAssistant();
 
   List<LocalSnippet> get localSnippets => snippets.items;
+  List<DictionaryEntry> get dictionaryEntries => dictionary.items;
 
   int _nativePage = 0;
   int get nativePage => _nativePage;
@@ -355,15 +358,14 @@ class KeyboardController extends ChangeNotifier {
   /// Auto so an old Transcribe preference cannot reintroduce the removed UI.
   MicMode get micMode =>
       _micMode == MicMode.translate && _translateEverActivated
-          ? MicMode.translate
-          : MicMode.autoMix;
+      ? MicMode.translate
+      : MicMode.autoMix;
 
   final TranslationEngine _translationEngine = TranslationEngine();
   final GeminiService _speechPolisher = GeminiService();
   final SarvamTranslationService _sarvamTranslator = SarvamTranslationService();
   bool _speechPolishingEnabled = false;
   bool get speechPolishingEnabled => _speechPolishingEnabled;
-
 
   // ---- Translate mode config (saved/active) ----
   // Default: Source=Odia, Target=English, Output=Roman.
@@ -697,9 +699,11 @@ class KeyboardController extends ChangeNotifier {
       _soundEnabled = prefs.getBool('sound') ?? false;
       _speechPolishingEnabled = prefs.getBool('speechPolishing') ?? false;
       final micModeName = prefs.getString('micMode');
-      if (micModeName == 'translate') _micMode = MicMode.translate;
+      if (micModeName == 'translate')
+        _micMode = MicMode.translate;
       // Legacy `transcribe` and `autoMix` values both migrate to Auto.
-      else _micMode = MicMode.autoMix;
+      else
+        _micMode = MicMode.autoMix;
       // Translate mode config (saved/active).
       final translateSourceId = prefs.getString('translateSource');
       if (translateSourceId != null) {
@@ -771,6 +775,21 @@ class KeyboardController extends ChangeNotifier {
           // A malformed local preference must never block keyboard startup.
         }
       }
+      final savedDictionary = prefs.getString('localDictionary');
+      if (savedDictionary != null) {
+        try {
+          final decoded = jsonDecode(savedDictionary);
+          if (decoded is List) {
+            dictionary.restore(
+              decoded
+                  .map(DictionaryEntry.fromJson)
+                  .whereType<DictionaryEntry>(),
+            );
+          }
+        } catch (_) {
+          // A malformed local preference must never block keyboard startup.
+        }
+      }
       for (final pack in kLanguagePacks) {
         final learned = prefs.getStringList('learned_${pack.id}');
         if (learned != null) suggestions.restoreLearned(pack.id, learned);
@@ -810,7 +829,9 @@ class KeyboardController extends ChangeNotifier {
               }
             case 'micMode':
               if (v is String) {
-                _micMode = v == 'translate' ? MicMode.translate : MicMode.autoMix;
+                _micMode = v == 'translate'
+                    ? MicMode.translate
+                    : MicMode.autoMix;
               }
             case 'haptics':
               if (v is bool) _hapticsEnabled = v;
@@ -1678,12 +1699,8 @@ class KeyboardController extends ChangeNotifier {
     bool? native,
   }) {
     if (!_speechPolishingEnabled) return Future.value(text);
-    final selectedLanguage =
-        language ??
-        'the detected language';
-    final selectedNative =
-        native ??
-        _autoMixStyle == ScriptMode.native;
+    final selectedLanguage = language ?? 'the detected language';
+    final selectedNative = native ?? _autoMixStyle == ScriptMode.native;
     return _speechPolisher.polishSpeech(
       text,
       language: selectedLanguage,
@@ -1719,6 +1736,7 @@ class KeyboardController extends ChangeNotifier {
 
   void _appendVoiceText(String text) {
     if (text.trim().isEmpty) return;
+    text = dictionary.apply(text);
     text = snippets.expand(text) ?? text;
     final needsSpace =
         editor.text.isNotEmpty &&
@@ -2116,6 +2134,24 @@ class KeyboardController extends ChangeNotifier {
   }
 
   String? expandSnippet(String text) => snippets.expand(text);
+
+  void saveDictionaryEntry(String heard, String preferred) {
+    dictionary.put(heard, preferred);
+    _persist(
+      'localDictionary',
+      jsonEncode(dictionary.items.map((item) => item.toJson()).toList()),
+    );
+    notifyListeners();
+  }
+
+  void deleteDictionaryEntry(String heard) {
+    dictionary.remove(heard);
+    _persist(
+      'localDictionary',
+      jsonEncode(dictionary.items.map((item) => item.toJson()).toList()),
+    );
+    notifyListeners();
+  }
 
   // =====================================================================
   // Emoji recents

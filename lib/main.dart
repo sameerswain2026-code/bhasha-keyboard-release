@@ -14,6 +14,7 @@ import 'ime/ime_bridge.dart';
 import 'ui/kb_theme.dart';
 import 'ui/keyboard_view.dart';
 import 'ui/setup_flow_screen.dart';
+import 'ui/personalization_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -324,6 +325,52 @@ class DemoEditorScreen extends StatelessWidget {
                     onTap: () => kb.togglePanel(ActivePanel.emoji),
                   ),
                 ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 2),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(16),
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const PersonalizationScreen(),
+                  ),
+                ),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    color: t.accent.withValues(alpha: 0.09),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: t.accent.withValues(alpha: 0.28)),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.tune_rounded, color: t.accent),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'Personalize your keyboard',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                            color: t.keyText,
+                          ),
+                        ),
+                      ),
+                      Text(
+                        'Snippets • Dictionary',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: t.keyTextSecondary,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Icon(Icons.chevron_right, color: t.accent),
+                    ],
+                  ),
+                ),
               ),
             ),
             Expanded(
