@@ -137,6 +137,13 @@ class ResilientSpeechProvider implements SpeechProvider {
     if (_target != null) provider.setTranslateTarget(_target!);
     provider.setErrorHandler((message) {
       if (identical(provider, _primary) && !_fallbackStarted && _pack != null) {
+        // Android SpeechRecognizer only transcribes one locale. It cannot
+        // implement Sarvam Translate or Auto Mix; falling back here would
+        // insert unrelated English text after a realtime API failure.
+        if (_micMode != MicMode.transcribe) {
+          _onError?.call(message);
+          return;
+        }
         _fallbackStarted = true;
         unawaited(_primary.stop());
         _wire(_fallback);

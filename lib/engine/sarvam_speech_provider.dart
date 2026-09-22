@@ -120,10 +120,10 @@ class SarvamSpeechProvider implements SpeechProvider {
     //  - transcribe: output script follows the keyboard's Native/Roman
     //    setting - translit for Roman on a non-Latin language, else
     //    transcribe (native script).
-    //  - autoMix: always Romanized, regardless of spoken language or the
-    //    current script-mode setting (the controller also forces
-    //    ScriptMode.roman for this mode; pinned here too so mid-session
-    //    mode switches take effect immediately).
+    //  - autoMix: adaptive language detection with code-mixed output. The
+    //    realtime service must receive language_code=auto and mode=codemix;
+    //    using translit here caused Hindi/Odia speech to be forced into
+    //    unrelated Latin output.
     //  - translate: real speech-to-English translation done server-side
     //    by Sarvam (far higher quality than pivoting through the app's
     //    small offline phrase dictionary). The English result's script
@@ -132,7 +132,7 @@ class SarvamSpeechProvider implements SpeechProvider {
     //    English translation in the active language's script.
     final String mode;
     if (_micMode == MicMode.autoMix) {
-      mode = pack.isLatin ? 'transcribe' : 'translit';
+      mode = 'codemix';
     } else if (_micMode == MicMode.translate) {
       mode = 'translate';
     } else {
@@ -146,14 +146,14 @@ class SarvamSpeechProvider implements SpeechProvider {
         // Sarvam's current streaming API uses the underscore form. The old
         // hyphenated key was silently ignored by the service, which left the
         // keyboard in "Listening…" without receiving transcripts.
-        '?language_code=${pack.sarvamCode}'
+        '?language_code=${Uri.encodeQueryComponent(pack.sarvamCode)}'
         '&model=$_model'
         '&mode=$mode'
         '&sample_rate=$sampleRate'
         '&encoding=linear16'
-        '&high_vad_sensitivity=true'
-        '&vad_signals=false'
-        '&flush_signal=true';
+        '&stream_type=balanced'
+        '&endpointing=vad'
+        '&return_timestamps=false';
 
     final key = _pool.current;
     try {
@@ -286,13 +286,15 @@ class SarvamSpeechProvider implements SpeechProvider {
   @override
   Future<void> stop() async {
     _running = false;
-    // Flush buffered audio so the spoken tail is finalized before close.
+    // Gracefully end the VAD session so the server finalizes the spoken tail.
+    // `flush` is only defined for manual endpointing and is ignored by the
+    // realtime API when endpointing=vad.
     final sock = _ws;
     if (sock != null && sock.readyState == WebSocket.open) {
       try {
-        sock.add(jsonEncode({'event': 'flush'}));
+        sock.add(jsonEncode({'event': 'end'}));
         // Give the server a brief window to emit the final transcript.
-        await Future<void>.delayed(const Duration(milliseconds: 600));
+        await Future<void>.delayed(const Duration(milliseconds: 800));
       } catch (_) {}
     }
     await _micSub?.cancel();

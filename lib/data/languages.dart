@@ -23,7 +23,7 @@ class LanguagePack {
   final bool voiceAvailable;
 
   /// Sarvam AI language code (BCP-47). Defaults to [locale]; set only
-  /// where Sarvam's code differs (e.g. Odia: or-IN -> od-IN).
+  /// where Sarvam's realtime code differs from the app locale.
   final String? sarvamCodeOverride;
 
   /// Script-specific transliteration overrides (roman token -> output),
@@ -53,6 +53,10 @@ class LanguagePack {
 
   /// Language code used for Sarvam AI speech recognition.
   String get sarvamCode => sarvamCodeOverride ?? locale;
+
+  /// Language code used by Sarvam's text translation endpoint. That endpoint
+  /// currently spells Odia as `od-IN`, while realtime speech uses `or-IN`.
+  String get translationCode => sarvamCode == 'or-IN' ? 'od-IN' : sarvamCode;
 }
 
 /// Tamil folds: aspirated/voiced consonants unassigned in the Tamil block
@@ -168,7 +172,9 @@ const List<LanguagePack> kLanguagePacks = [
     locale: 'or-IN',
     family: ScriptFamily.brahmic,
     scriptBase: 0x0B00,
-    sarvamCodeOverride: 'od-IN', // Sarvam uses od-IN for Odia
+    // Realtime STT accepts `or-IN`; text translation maps this to `od-IN`
+    // through [translationCode].
+    sarvamCodeOverride: 'or-IN',
   ),
   LanguagePack(
     id: 'ml',

@@ -87,8 +87,9 @@ void main() {
   });
 
   group('Gate G: Sarvam language code mapping', () {
-    test('Odia maps to od-IN (Sarvam convention)', () {
-      expect(LanguageRegistry.byId('or').sarvamCode, 'od-IN');
+    test('Odia maps to or-IN for realtime STT', () {
+      expect(LanguageRegistry.byId('or').sarvamCode, 'or-IN');
+      expect(LanguageRegistry.byId('or').translationCode, 'od-IN');
     });
 
     test('all other packs use their BCP-47 locale directly', () {

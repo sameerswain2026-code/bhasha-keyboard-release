@@ -15,6 +15,7 @@ import '../data/layouts.dart';
 import '../engine/ai_assistant_engine.dart';
 import '../engine/ai_command_capture.dart';
 import '../engine/gemini_service.dart';
+import '../engine/sarvam_translation_service.dart';
 import '../engine/suggestion_engine.dart';
 import '../engine/transliterator.dart';
 import '../engine/translation_engine.dart';
@@ -354,6 +355,7 @@ class KeyboardController extends ChangeNotifier {
 
   final TranslationEngine _translationEngine = TranslationEngine();
   final GeminiService _speechPolisher = GeminiService();
+  final SarvamTranslationService _sarvamTranslator = SarvamTranslationService();
   bool _speechPolishingEnabled = false;
   bool get speechPolishingEnabled => _speechPolishingEnabled;
 
@@ -1780,55 +1782,34 @@ class KeyboardController extends ChangeNotifier {
   ///     the best-effort fallback rather than silently dropping the
   ///     translation.
   Future<String> _resolveVoiceText(String text) async {
-    if (_micMode != MicMode.translate) return text;
+    if (_micMode != MicMode.translate || _translateTarget.id == 'en') {
+      return text;
+    }
     try {
-      // Sarvam's translate mode returns English only. The old client then
-      // sent English -> Indic text through the offline dictionary, whose
-      // last-resort behavior is transliteration. That produced native-looking
-      // English words instead of semantic Hindi/Odia/etc. Use Gemini for every
-      // non-English target, including English -> Indic and Indic -> Indic.
-      if (!_translateTarget.isLatin &&
-          _translateSource.id != _translateTarget.id) {
-        return await _speechPolisher.translateText(
-          text,
-          sourceLanguage: _translateSource.englishName,
-          targetLanguage: _translateTarget.englishName,
-          native: _translateOutputStyle == ScriptMode.native,
-        );
+      // Realtime `translate` returns English. Use Sarvam-Translate for the
+      // selected target instead of the old offline dictionary/Gemini-first
+      // path, which commonly fell back to untranslated English.
+      final translated = await _sarvamTranslator.translate(
+        text,
+        source: LanguageRegistry.byId('en'),
+        target: _translateTarget,
+        outputStyle: _translateOutputStyle,
+      );
+      if (translated != null && translated.trim().isNotEmpty) {
+        return translated;
       }
-      String english = text;
-      if (!_serverSideTranslateSupported) {
-        english = _translateSource.id == 'en'
-            ? text
-            : await _translationEngine.translate(
-                    text,
-                    _translateSource,
-                    LanguageRegistry.byId('en'),
-                  ) ??
-                  text;
-      }
-      if (_translateTarget.id == 'en') {
-        return english;
-      }
-      // Pivot English -> target (native-script result; see limitation
-      // above regarding Roman output for non-Latin targets).
-      return await _translationEngine.translate(
-            english,
-            LanguageRegistry.byId('en'),
-            _translateTarget,
-          ) ??
-          english;
+      // Development/offline fallback only; the primary APK path uses the
+      // official Sarvam endpoint when the configured key is available.
+      return await _speechPolisher.translateText(
+        text,
+        sourceLanguage: 'English',
+        targetLanguage: _translateTarget.englishName,
+        native: _translateOutputStyle == ScriptMode.native,
+      );
     } catch (_) {
       return text;
     }
   }
-
-  /// True when the active [SpeechProvider] performs the speech -> English
-  /// translation itself (Sarvam's `translate` mode on saaras:v3). The
-  /// simulated web-preview provider has no such server-side mode, so its
-  /// output is always source-language text and needs the offline pivot
-  /// fallback above.
-  bool get _serverSideTranslateSupported => voice.hasNativeTranslateMode;
 
   /// Cancels voice before a keyboard edit is applied. Key taps must not wait
   /// for the provider's network flush window: that made every key appear
