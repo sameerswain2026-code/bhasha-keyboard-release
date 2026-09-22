@@ -34,6 +34,7 @@ import 'panels/language_panel.dart';
 import 'panels/menu_panel.dart';
 import 'panels/resize_panel.dart';
 import 'panels/settings_panel.dart';
+import 'panels/snippets_panel.dart';
 import 'panels/sticker_panel.dart';
 import 'panels/text_editing_panel.dart';
 import 'panels/theme_panel.dart';
@@ -89,6 +90,8 @@ class KeyboardView extends StatelessWidget {
         return const StickerPanel();
       case ActivePanel.textEditing:
         return const TextEditingPanel();
+      case ActivePanel.snippets:
+        return const SnippetsPanel();
       case ActivePanel.resize:
         return const ResizePanel();
       case ActivePanel.translateConfig:

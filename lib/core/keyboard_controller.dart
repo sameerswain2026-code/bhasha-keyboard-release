@@ -5,6 +5,7 @@
 library;
 
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -17,6 +18,7 @@ import '../engine/ai_command_capture.dart';
 import '../engine/gemini_service.dart';
 import '../engine/sarvam_translation_service.dart';
 import '../engine/suggestion_engine.dart';
+import '../engine/snippet_store.dart';
 import '../engine/transliterator.dart';
 import '../engine/translation_engine.dart';
 import '../engine/voice_engine.dart';
@@ -37,6 +39,7 @@ enum ActivePanel {
   gif,
   sticker,
   textEditing,
+  snippets,
   resize,
   translateConfig, // Translate Configuration Page (source/target/style + Save)
   clipboard,
@@ -101,7 +104,10 @@ class KeyboardController extends ChangeNotifier {
   // ---- Sub-engines ----
   final VoiceEngine voice;
   final SuggestionEngine suggestions = SuggestionEngine();
+  final LocalSnippetStore snippets = LocalSnippetStore();
   final WritingAssistant writingAssistant = const WritingAssistant();
+
+  List<LocalSnippet> get localSnippets => snippets.items;
 
   int _nativePage = 0;
   int get nativePage => _nativePage;
@@ -752,6 +758,19 @@ class KeyboardController extends ChangeNotifier {
       _recentEmojis.addAll(prefs.getStringList('recentEmojis') ?? []);
       _recentStickers.addAll(prefs.getStringList('recentStickers') ?? []);
       _clipboardHistory.addAll(prefs.getStringList('clipboard') ?? []);
+      final savedSnippets = prefs.getString('localSnippets');
+      if (savedSnippets != null) {
+        try {
+          final decoded = jsonDecode(savedSnippets);
+          if (decoded is List) {
+            snippets.restore(
+              decoded.map(LocalSnippet.fromJson).whereType<LocalSnippet>(),
+            );
+          }
+        } catch (_) {
+          // A malformed local preference must never block keyboard startup.
+        }
+      }
       for (final pack in kLanguagePacks) {
         final learned = prefs.getStringList('learned_${pack.id}');
         if (learned != null) suggestions.restoreLearned(pack.id, learned);
@@ -906,7 +925,8 @@ class KeyboardController extends ChangeNotifier {
 
     // Word separators commit the composing word first.
     if (!isLetter && !isContactCharacter) {
-      _commitComposing();
+      final expansion = snippets.expand(_composing);
+      _commitComposing(replaceWith: expansion);
       _insertRaw(text);
       _updateSuggestions();
       notifyListeners();
@@ -1699,6 +1719,7 @@ class KeyboardController extends ChangeNotifier {
 
   void _appendVoiceText(String text) {
     if (text.trim().isEmpty) return;
+    text = snippets.expand(text) ?? text;
     final needsSpace =
         editor.text.isNotEmpty &&
         !editor.text.endsWith(' ') &&
@@ -2072,6 +2093,31 @@ class KeyboardController extends ChangeNotifier {
   }
 
   // =====================================================================
+  // Local snippets / personal dictionary
+  // =====================================================================
+  void saveSnippet(String alias, String value) {
+    snippets.put(alias, value);
+    _persist(
+      'localSnippets',
+      jsonEncode(snippets.items.map((item) => item.toJson()).toList()),
+    );
+    _updateSuggestions();
+    notifyListeners();
+  }
+
+  void deleteSnippet(String alias) {
+    snippets.remove(alias);
+    _persist(
+      'localSnippets',
+      jsonEncode(snippets.items.map((item) => item.toJson()).toList()),
+    );
+    _updateSuggestions();
+    notifyListeners();
+  }
+
+  String? expandSnippet(String text) => snippets.expand(text);
+
+  // =====================================================================
   // Emoji recents
   // =====================================================================
 
@@ -2107,6 +2153,11 @@ class KeyboardController extends ChangeNotifier {
   // =====================================================================
 
   void _updateSuggestions() {
+    final snippetMatches = snippets.suggestions(_composing, limit: 3);
+    if (snippetMatches.isNotEmpty) {
+      _suggestionList = snippetMatches;
+      return;
+    }
     if (_composing.isEmpty) {
       final contacts = suggestions.savedContactSuggestions(_language.id);
       if (contacts.isNotEmpty) {

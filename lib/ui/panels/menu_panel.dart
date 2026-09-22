@@ -31,6 +31,7 @@ const List<_MenuItem> _items = [
   _MenuItem(Icons.sticky_note_2_outlined, 'Sticker', panel: ActivePanel.sticker),
   _MenuItem(Icons.mood, 'Emoji', panel: ActivePanel.emoji),
   _MenuItem(Icons.text_fields, 'Text Editing', panel: ActivePanel.textEditing),
+  _MenuItem(Icons.auto_awesome, 'Snippets', panel: ActivePanel.snippets),
   _MenuItem(
     Icons.photo_size_select_large_outlined,
     'Resize',
