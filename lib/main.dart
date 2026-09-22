@@ -207,270 +207,292 @@ class DemoEditorScreen extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            Container(
-              margin: const EdgeInsets.fromLTRB(12, 10, 12, 6),
-              padding: const EdgeInsets.fromLTRB(14, 12, 14, 13),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF087FE8), Color(0xFF6927D8)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(22),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0x331A73E8),
-                    blurRadius: 16,
-                    offset: Offset(0, 7),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 38,
-                        height: 38,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.18),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Center(
-                          child: Text(
-                            'भ',
-                            style: TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.w800,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      const Expanded(
-                        child: Text(
-                          'Bhasha Keyboard',
-                          style: TextStyle(
-                            fontSize: 17,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 9,
-                          vertical: 5,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.18),
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        child: Text(
-                          kb.language.englishName,
-                          style: const TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 13),
-                  const Text(
-                    'One keyboard.\nMany Indias.',
-                    style: TextStyle(
-                      fontSize: 25,
-                      height: 1.05,
-                      fontWeight: FontWeight.w900,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Type India, your way.',
-                    style: TextStyle(
-                      fontSize: 12.5,
-                      fontStyle: FontStyle.italic,
-                      color: Color(0xFFE5EDFF),
-                    ),
-                  ),
-                  const SizedBox(height: 11),
-                  Wrap(
-                    spacing: 6,
-                    runSpacing: 6,
-                    children: const [
-                      'हिन्दी',
-                      'தமிழ்',
-                      'తెలుగు',
-                      'বাংলা',
-                      'मराठी',
-                      '+ 16 more',
-                    ].map((label) => _LanguageChip(label)).toList(),
-                  ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
-              child: Row(
-                children: [
-                  _FeaturePill(
-                    Icons.language,
-                    '22 Languages',
-                    onTap: () => kb.togglePanel(ActivePanel.language),
-                  ),
-                  _FeaturePill(Icons.mic_none, 'Voice', onTap: kb.toggleVoice),
-                  _FeaturePill(
-                    Icons.translate,
-                    'Translate',
-                    onTap: kb.openTranslateConfig,
-                  ),
-                  _FeaturePill(
-                    Icons.emoji_emotions_outlined,
-                    'Emoji',
-                    onTap: () => kb.togglePanel(ActivePanel.emoji),
-                  ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 2),
-              child: InkWell(
-                borderRadius: BorderRadius.circular(16),
-                onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => const PersonalizationScreen(),
-                  ),
-                ),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 12,
-                  ),
-                  decoration: BoxDecoration(
-                    color: t.accent.withValues(alpha: 0.09),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: t.accent.withValues(alpha: 0.28)),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.tune_rounded, color: t.accent),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          'Personalize your keyboard',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w800,
-                            color: t.keyText,
-                          ),
-                        ),
-                      ),
-                      Text(
-                        'Snippets • Dictionary',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: t.keyTextSecondary,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      Icon(Icons.chevron_right, color: t.accent),
-                    ],
-                  ),
-                ),
-              ),
-            ),
             Expanded(
-              child: Container(
-                margin: const EdgeInsets.fromLTRB(12, 7, 12, 8),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF1B2140) : Colors.white,
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: t.border),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.chat_bubble_outline,
-                          size: 16,
-                          color: t.accent,
+              child: ListView(
+                padding: const EdgeInsets.only(bottom: 10),
+                children: [
+                  Container(
+                    margin: const EdgeInsets.fromLTRB(12, 10, 12, 6),
+                    padding: const EdgeInsets.fromLTRB(14, 12, 14, 13),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF087FE8), Color(0xFF6927D8)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(22),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x331A73E8),
+                          blurRadius: 16,
+                          offset: Offset(0, 7),
                         ),
-                        const SizedBox(width: 6),
-                        Text(
-                          'Try the keyboard',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: t.keyText,
-                          ),
-                        ),
-                        const Spacer(),
-                        if (kb.editor.text.isNotEmpty)
-                          InkWell(
-                            onTap: kb.editor.clear,
-                            child: Text(
-                              'Clear',
-                              style: TextStyle(fontSize: 11, color: t.accent),
-                            ),
-                          ),
                       ],
                     ),
-                    const SizedBox(height: 10),
-                    Align(
-                      alignment: Alignment.centerLeft,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              width: 38,
+                              height: 38,
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.18),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Center(
+                                child: Text(
+                                  'भ',
+                                  style: TextStyle(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w800,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            const Expanded(
+                              child: Text(
+                                'Bhasha Keyboard',
+                                style: TextStyle(
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 9,
+                                vertical: 5,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.18),
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              child: Text(
+                                kb.language.englishName,
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 13),
+                        const Text(
+                          'One keyboard.\nMany Indias.',
+                          style: TextStyle(
+                            fontSize: 25,
+                            height: 1.05,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Type India, your way.',
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            fontStyle: FontStyle.italic,
+                            color: Color(0xFFE5EDFF),
+                          ),
+                        ),
+                        const SizedBox(height: 11),
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 6,
+                          children: const [
+                            'हिन्दी',
+                            'தமிழ்',
+                            'తెలుగు',
+                            'বাংলা',
+                            'मराठी',
+                            '+ 16 more',
+                          ].map((label) => _LanguageChip(label)).toList(),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.fromLTRB(16, 8, 16, 2),
+                    child: _FeatureFlowCard(),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 2,
+                    ),
+                    child: Row(
+                      children: [
+                        _FeaturePill(
+                          Icons.language,
+                          '22 Languages',
+                          onTap: () => kb.togglePanel(ActivePanel.language),
+                        ),
+                        _FeaturePill(
+                          Icons.mic_none,
+                          'Voice',
+                          onTap: kb.toggleVoice,
+                        ),
+                        _FeaturePill(
+                          Icons.translate,
+                          'Translate',
+                          onTap: kb.openTranslateConfig,
+                        ),
+                        _FeaturePill(
+                          Icons.emoji_emotions_outlined,
+                          'Emoji',
+                          onTap: () => kb.togglePanel(ActivePanel.emoji),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 2),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(16),
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const PersonalizationScreen(),
+                        ),
+                      ),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 9,
+                          horizontal: 14,
+                          vertical: 12,
                         ),
                         decoration: BoxDecoration(
                           color: t.accent.withValues(alpha: 0.09),
-                          borderRadius: const BorderRadius.only(
-                            topLeft: Radius.circular(4),
-                            topRight: Radius.circular(16),
-                            bottomRight: Radius.circular(16),
-                            bottomLeft: Radius.circular(16),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: t.accent.withValues(alpha: 0.28),
                           ),
                         ),
-                        child: Text(
-                          'Namaste! How are you? 😊',
-                          style: TextStyle(fontSize: 14, color: t.keyText),
+                        child: Row(
+                          children: [
+                            Icon(Icons.tune_rounded, color: t.accent),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                'Personalize your keyboard',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w800,
+                                  color: t.keyText,
+                                ),
+                              ),
+                            ),
+                            Text(
+                              'Snippets • Dictionary',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: t.keyTextSecondary,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Icon(Icons.chevron_right, color: t.accent),
+                          ],
                         ),
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    Expanded(
-                      child: TextField(
-                        controller: kb.editor,
-                        maxLines: null,
-                        expands: true,
-                        readOnly: true,
-                        showCursor: true,
-                        textAlignVertical: TextAlignVertical.top,
-                        style: TextStyle(
-                          fontSize: 17,
-                          height: 1.4,
-                          color: t.keyText,
+                  ),
+                  Container(
+                    margin: const EdgeInsets.fromLTRB(12, 7, 12, 8),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF1B2140) : Colors.white,
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: t.border),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.chat_bubble_outline,
+                              size: 16,
+                              color: t.accent,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              'Try the keyboard',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: t.keyText,
+                              ),
+                            ),
+                            const Spacer(),
+                            if (kb.editor.text.isNotEmpty)
+                              InkWell(
+                                onTap: kb.editor.clear,
+                                child: Text(
+                                  'Clear',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: t.accent,
+                                  ),
+                                ),
+                              ),
+                          ],
                         ),
-                        decoration: InputDecoration(
-                          border: InputBorder.none,
-                          hintText: 'Type in Hindi, Odia, Tamil…',
-                          hintStyle: TextStyle(
-                            fontSize: 15,
-                            color: t.keyTextSecondary,
+                        const SizedBox(height: 10),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 9,
+                            ),
+                            decoration: BoxDecoration(
+                              color: t.accent.withValues(alpha: 0.09),
+                              borderRadius: const BorderRadius.only(
+                                topLeft: Radius.circular(4),
+                                topRight: Radius.circular(16),
+                                bottomRight: Radius.circular(16),
+                                bottomLeft: Radius.circular(16),
+                              ),
+                            ),
+                            child: Text(
+                              'Namaste! How are you? 😊',
+                              style: TextStyle(fontSize: 14, color: t.keyText),
+                            ),
                           ),
                         ),
-                      ),
+                        const SizedBox(height: 8),
+                        SizedBox(
+                          height: 92,
+                          child: TextField(
+                            controller: kb.editor,
+                            maxLines: null,
+                            expands: true,
+                            readOnly: true,
+                            showCursor: true,
+                            textAlignVertical: TextAlignVertical.top,
+                            style: TextStyle(
+                              fontSize: 17,
+                              height: 1.4,
+                              color: t.keyText,
+                            ),
+                            decoration: InputDecoration(
+                              border: InputBorder.none,
+                              hintText: 'Type in Hindi, Odia, Tamil…',
+                              hintStyle: TextStyle(
+                                fontSize: 15,
+                                color: t.keyTextSecondary,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
             const KeyboardView(),
@@ -501,6 +523,108 @@ class _LanguageChip extends StatelessWidget {
       ),
     ),
   );
+}
+
+class _FeatureFlowCard extends StatelessWidget {
+  const _FeatureFlowCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final t = KbTheme.of(context);
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 9),
+      decoration: BoxDecoration(
+        color: t.accent.withValues(alpha: 0.07),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: t.accent.withValues(alpha: 0.2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'See how Bhasha works',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              color: t.keyText,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              _FlowNode(icon: Icons.mic_none, label: 'Speak', color: t.accent),
+              _FlowArrow(color: t.keyTextSecondary),
+              _FlowNode(
+                icon: Icons.auto_awesome,
+                label: 'Auto detect',
+                color: const Color(0xFF7C3AED),
+              ),
+              _FlowArrow(color: t.keyTextSecondary),
+              _FlowNode(
+                icon: Icons.translate,
+                label: 'Translate',
+                color: const Color(0xFF0F766E),
+              ),
+              _FlowArrow(color: t.keyTextSecondary),
+              _FlowNode(
+                icon: Icons.keyboard_alt_outlined,
+                label: 'Type',
+                color: const Color(0xFFB45309),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FlowNode extends StatelessWidget {
+  const _FlowNode({
+    required this.icon,
+    required this.label,
+    required this.color,
+  });
+  final IconData icon;
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) => Expanded(
+    child: Column(
+      children: [
+        Container(
+          width: 30,
+          height: 30,
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.13),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon, size: 16, color: color),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          textAlign: TextAlign.center,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            fontSize: 9,
+            fontWeight: FontWeight.w700,
+            color: color,
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+class _FlowArrow extends StatelessWidget {
+  const _FlowArrow({required this.color});
+  final Color color;
+  @override
+  Widget build(BuildContext context) =>
+      Icon(Icons.chevron_right, size: 14, color: color);
 }
 
 class _FeaturePill extends StatelessWidget {

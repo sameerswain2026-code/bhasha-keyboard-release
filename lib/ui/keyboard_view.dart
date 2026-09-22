@@ -468,9 +468,9 @@ class _Toolbar extends StatelessWidget {
             iconSlot(Icons.content_paste, ActivePanel.clipboard, 'Clipboard'),
             iconSlot(
               Icons.translate,
-              ActivePanel.manualTranslate,
-              'Translate',
-              onTap: kb.openManualTranslate,
+              ActivePanel.translateConfig,
+              'Voice Translate',
+              onTap: kb.openTranslateConfig,
             ),
             iconSlot(Icons.settings_outlined, ActivePanel.settings, 'Settings'),
           ],

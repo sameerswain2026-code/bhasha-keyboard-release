@@ -2,7 +2,7 @@ name: bhasha_keyboard
 description: "Bhasha Keyboard - Premium multilingual keyboard for 22 Indian languages with native scripts, transliteration and voice typing."
 publish_to: 'none'
 
-version: 1.1.3+7
+version: 1.1.3+8
 
 environment:
   sdk: '>=3.9.0 <4.0.0'

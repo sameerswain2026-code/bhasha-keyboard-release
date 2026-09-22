@@ -47,6 +47,11 @@ const List<_MenuItem> _items = [
     panel: ActivePanel.manualTranslate,
   ),
   _MenuItem(
+    Icons.record_voice_over,
+    'Voice Translate',
+    panel: ActivePanel.translateConfig,
+  ),
+  _MenuItem(
     Icons.photo_size_select_large_outlined,
     'Resize',
     panel: ActivePanel.resize,
