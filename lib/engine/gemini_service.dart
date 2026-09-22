@@ -91,7 +91,7 @@ class GeminiService {
     final prompt = '''You are a conservative multilingual speech-to-text editor.
 Input language: $language.
 ${native ? 'Keep the original native script.' : 'Keep the requested Roman/Latin output style.'}
-Clean this transcript for insertion into a message. Remove accidental repeated words, repeated phrases, stutters, and filler words. Correct obvious spelling, grammar, punctuation, and spacing. Make it clear and professional, but do not summarize, translate, add facts, or change meaning. Preserve names, numbers, URLs, code, and meaningful language mixing. Return only the corrected text.
+Clean this transcript for insertion into a message. Remove accidental repeated words, repeated phrases, stutters, and filler words. Correct only obvious pronunciation-to-word, spelling, grammar, punctuation, and spacing errors. Make wording clear and moderately formal, but do not summarize, translate, add facts, or change meaning. Preserve names, numbers, URLs, code, and meaningful language mixing. Return only the corrected text.
 
 Transcript:
 $original''';

@@ -178,9 +178,9 @@ class VoiceEngine extends ChangeNotifier {
   /// The recognizer's VAD/final events remain the primary speech boundary.
   // Keep listening through natural pauses while the user is speaking;
   // manual key interaction is handled separately by the controller.
-  /// Stop after ten seconds with no partial/final speech activity. A new
+  /// Stop after a short natural pause with no partial/final speech activity. A new
   /// result re-arms the timer, so continuous speech keeps the session alive.
-  static const Duration defaultSilenceTimeout = Duration(seconds: 10);
+  static const Duration defaultSilenceTimeout = Duration(milliseconds: 1800);
 
   final SpeechProvider _provider;
 

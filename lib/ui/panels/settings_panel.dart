@@ -221,13 +221,13 @@ class SettingsPanel extends StatelessWidget {
                 SwitchListTile(
                   dense: true,
                   title: Text(
-                    'Auto-correct and grammar correction',
+                    'Grammar, auto-correction and formalization',
                     style: TextStyle(fontSize: 13, color: t.keyText),
                   ),
                   subtitle: Text(
                     kb.speechPolishingEnabled
-                        ? 'On - Gemini polishes speech; slower insertion'
-                        : 'Off - fastest real-time transcription/translation',
+                        ? 'On - pronunciation, grammar and wording are polished'
+                        : 'Off - fastest real-time speech insertion',
                     style: TextStyle(fontSize: 11, color: t.keyTextSecondary),
                   ),
                   value: kb.speechPolishingEnabled,

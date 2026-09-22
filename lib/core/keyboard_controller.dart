@@ -119,6 +119,7 @@ class KeyboardController extends ChangeNotifier {
       ? 1
       : nativeLayoutPagesFor(keyboardLanguage).length;
   void nextNativePage() {
+    if (voice.isActive) voice.cancelForKeyPress();
     if (keyboardLanguage.isLatin) return;
     _nativePage = (_nativePage + 1) % nativePageCount;
     notifyListeners();
@@ -434,6 +435,7 @@ class KeyboardController extends ChangeNotifier {
   }
 
   void setTranslateOutputStyle(ScriptMode style) {
+    if (voice.isActive) voice.cancelForKeyPress();
     if (style == ScriptMode.native && !_translateTarget.supportsNative) return;
     if (style == ScriptMode.native) {
       _installedLanguagePacks.add(_translateTarget.id);
@@ -453,6 +455,7 @@ class KeyboardController extends ChangeNotifier {
 
   void setAutoMixStyle(ScriptMode mode) {
     _feedback();
+    if (voice.isActive) voice.cancelForKeyPress();
     _autoMixStyle = mode;
     _persist('autoMixStyle', mode.name);
     if (voice.isActive && micMode == MicMode.autoMix) {
@@ -1342,6 +1345,7 @@ class KeyboardController extends ChangeNotifier {
   // =====================================================================
 
   void setLayer(KeyboardLayer l) {
+    if (voice.isActive) voice.cancelForKeyPress();
     _feedback();
     _layer = l;
     notifyListeners();
@@ -1388,6 +1392,7 @@ class KeyboardController extends ChangeNotifier {
   // =====================================================================
 
   void setLanguage(LanguagePack pack) {
+    if (voice.isActive) voice.cancelForKeyPress();
     // Commit pending text before switching language.
     _commitComposing();
     _lastCommittedWord = '';
@@ -1413,6 +1418,7 @@ class KeyboardController extends ChangeNotifier {
   }
 
   void setScriptMode(ScriptMode mode) {
+    if (voice.isActive) voice.cancelForKeyPress();
     if (mode == ScriptMode.native && !_language.supportsNative) return;
     if (mode == ScriptMode.roman && !_language.supportsRoman) return;
     _commitComposing();
@@ -1428,6 +1434,7 @@ class KeyboardController extends ChangeNotifier {
   // =====================================================================
 
   void togglePanel(ActivePanel p) {
+    if (voice.isActive) voice.cancelForKeyPress();
     _feedback();
     _panel = _panel == p ? ActivePanel.none : p;
     _panelKeyboardActive = false;
@@ -1441,6 +1448,7 @@ class KeyboardController extends ChangeNotifier {
   /// every panel a working "back" step even though a single button is
   /// shared for both hide-mini-keyboard and close-panel.
   void closePanel() {
+    if (voice.isActive) voice.cancelForKeyPress();
     if (_panelKeyboardActive) {
       _panelKeyboardActive = false;
       notifyListeners();
