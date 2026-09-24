@@ -75,6 +75,8 @@ const LanguagePack _autoMixLanguagePack = LanguagePack(
 );
 
 class KeyboardController extends ChangeNotifier {
+  static const MethodChannel _hapticsChannel = MethodChannel('bhasha/haptics');
+
   KeyboardController({
     VoiceEngine? voiceEngine,
     AiAssistantEngine? aiEngine,
@@ -339,7 +341,6 @@ class KeyboardController extends ChangeNotifier {
   // ---- Long-press delete ----
   Timer? _deleteTimer;
   int _deleteGeneration = 0;
-  int _deleteTickCount = 0;
 
   /// Optional hook (wired by [ImeBridge] on real Android IME sessions
   /// only): attempts to delete the HOST app's actual text selection
@@ -1318,43 +1319,6 @@ class KeyboardController extends ChangeNotifier {
     _updateSuggestions();
   }
 
-  /// Word-acceleration delete used once a held backspace has been
-  /// running for a while (Gboard-style: hold long enough and whole
-  /// words disappear per tick instead of single characters). Deletes
-  /// any selection first (falls back to [_performDelete]'s selection
-  /// path), otherwise removes trailing whitespace immediately before
-  /// the cursor plus the whole word before that.
-  void _performDeleteWord() {
-    final sel = editor.selection;
-    final full = editor.text;
-    if (full.isEmpty) {
-      _composing = '';
-      _updateSuggestions();
-      return;
-    }
-    if (sel.isValid && !sel.isCollapsed) {
-      _performDelete();
-      return;
-    }
-    final cursor = sel.isValid ? sel.start.clamp(0, full.length) : full.length;
-    if (cursor <= 0) return;
-    bool isBoundary(String ch) => ch == ' ' || ch == '\n' || ch == '\t';
-    int i = cursor;
-    while (i > 0 && isBoundary(full[i - 1])) {
-      i--;
-    }
-    while (i > 0 && !isBoundary(full[i - 1])) {
-      i--;
-    }
-    final next = full.replaceRange(i, cursor, '');
-    editor.value = TextEditingValue(
-      text: next,
-      selection: TextSelection.collapsed(offset: i),
-    );
-    _composing = '';
-    _updateSuggestions();
-  }
-
   /// Starts a long-press-and-hold backspace. First tick may need to
   /// remove a host-app selection (see [deleteBackward]); subsequent
   /// repeats always operate on the shadow editor directly (a host-side
@@ -1365,7 +1329,6 @@ class KeyboardController extends ChangeNotifier {
   void startContinuousDelete() {
     stopContinuousDelete();
     final myGeneration = ++_deleteGeneration;
-    _deleteTickCount = 0;
     deleteBackward();
     _deleteTimer = Timer.periodic(const Duration(milliseconds: 90), (timer) {
       if (myGeneration != _deleteGeneration) {
@@ -1376,15 +1339,10 @@ class KeyboardController extends ChangeNotifier {
         stopContinuousDelete();
         return;
       }
-      _deleteTickCount++;
-      // Gboard-style acceleration: once the hold has run long enough
-      // (~1.1s), switch from single-character to whole-word deletion so
-      // clearing a long pasted block or several words never feels stuck.
-      if (_deleteTickCount > 12) {
-        _performDeleteWord();
-      } else {
-        _performDelete();
-      }
+      // Every repeat removes exactly one grapheme cluster. This is the
+      // Gboard behavior: holding backspace is fast, but never word-clears.
+      _feedback();
+      _performDelete();
       notifyListeners();
     });
   }
@@ -1393,7 +1351,6 @@ class KeyboardController extends ChangeNotifier {
     _deleteGeneration++;
     _deleteTimer?.cancel();
     _deleteTimer = null;
-    _deleteTickCount = 0;
   }
 
   // =====================================================================
@@ -1598,6 +1555,11 @@ class KeyboardController extends ChangeNotifier {
     if (_hapticsEnabled) {
       try {
         HapticFeedback.selectionClick();
+        // Flutter's engine haptics can be ignored by some IME surfaces.
+        // The native channel provides a reliable 10 ms key tick there.
+        unawaited(
+          _hapticsChannel.invokeMethod<void>('keyPress').catchError((_) {}),
+        );
       } catch (_) {}
     }
     if (_soundEnabled) {

@@ -27,6 +27,7 @@ class MainActivity : FlutterActivity() {
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        HapticFeedbackBridge.register(flutterEngine, this)
 
         MethodChannel(
             flutterEngine.dartExecutor.binaryMessenger, "bhasha/system"

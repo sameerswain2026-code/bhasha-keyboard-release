@@ -85,6 +85,7 @@ class BhashaImeService : InputMethodService() {
     override fun onCreate() {
         super.onCreate()
         val engine = FlutterEngine(this)
+        HapticFeedbackBridge.register(engine, this)
         engine.dartExecutor.executeDartEntrypoint(
             DartExecutor.DartEntrypoint(
                 FlutterInjector.instance().flutterLoader().findAppBundlePath(),
