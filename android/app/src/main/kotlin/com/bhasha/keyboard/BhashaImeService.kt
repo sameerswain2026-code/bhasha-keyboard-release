@@ -10,6 +10,8 @@ import android.net.Uri
 import android.os.Handler
 import android.os.Looper
 import android.os.Build
+import android.os.VibrationEffect
+import android.os.Vibrator
 import android.util.TypedValue
 import android.view.View
 import android.view.inputmethod.EditorInfo
@@ -238,6 +240,23 @@ class BhashaImeService : InputMethodService() {
                     micStream?.stopRecording()
                     result.success(true)
                 }
+                "keyHaptic" -> {
+                    val vibrator = getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
+                    if (vibrator?.hasVibrator() == true) {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                            vibrator.vibrate(
+                                VibrationEffect.createOneShot(
+                                    10L,
+                                    VibrationEffect.DEFAULT_AMPLITUDE,
+                                ),
+                            )
+                        } else {
+                            @Suppress("DEPRECATION")
+                            vibrator.vibrate(10L)
+                        }
+                    }
+                    result.success(true)
+                }
                 "isImeEnabled", "isImeSelected" -> result.success(true)
                 else -> result.notImplemented()
             }
@@ -362,6 +381,11 @@ class BhashaImeService : InputMethodService() {
 
     override fun onStartInputView(info: EditorInfo?, restarting: Boolean) {
         super.onStartInputView(info, restarting)
+        // Some OTP/password screens request the IME while the host window is
+        // still transitioning focus. Explicitly request the input view on
+        // every editor session so secure fields in WhatsApp, Telegram and
+        // Instagram do not leave the selected keyboard hidden.
+        mainHandler.postDelayed({ requestShowSelf(0) }, 80L)
         flutterEngine?.lifecycleChannel?.appIsResumed()
 
         // Android may reuse the same IME FlutterEngine when the keyboard is
