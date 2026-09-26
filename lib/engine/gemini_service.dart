@@ -85,13 +85,28 @@ class GeminiService {
     String text, {
     required String language,
     required bool native,
+    bool autoCorrection = true,
+    bool grammarCorrection = true,
+    bool formalization = true,
+    String context = '',
   }) async {
     final original = text.trim();
     if (original.isEmpty) return original;
-    final prompt = '''You are a conservative multilingual speech-to-text editor.
-Input language: $language.
+    final operations = <String>[
+      if (autoCorrection) 'correct obvious recognition/spelling mistakes',
+      if (grammarCorrection) 'correct genuine grammar errors only',
+      if (formalization)
+        'use an appropriately formal form without changing meaning',
+    ];
+    if (operations.isEmpty && context.trim().isEmpty) return original;
+    final contextInstruction = context.trim().isEmpty
+        ? ''
+        : '\nUser session context (use only as a supporting signal; never invent audio): ${context.trim()}\n';
+    final prompt =
+        '''You are a conservative multilingual speech-to-text editor.
+	Input language: $language.
 ${native ? 'Keep the original native script.' : 'Keep the requested Roman/Latin output style.'}
-Clean this transcript for insertion into a message. Remove accidental repeated words, repeated phrases, stutters, and filler words. Correct only obvious pronunciation-to-word, spelling, grammar, punctuation, and spacing errors. Make wording clear and moderately formal, but do not summarize, translate, add facts, or change meaning. Preserve names, numbers, URLs, code, and meaningful language mixing. Return only the corrected text.
+Apply only these requested operations: ${operations.isEmpty ? 'no rewriting' : operations.join('; ')}. Remove accidental repeated words, repeated phrases, stutters, and filler words only when clearly accidental. Detect self-correction phrases such as "no", "I mean", "actually", or their equivalent in the input language and keep the corrected phrase, but preserve the original when confidence is low. $contextInstruction Do not summarize, translate, add facts, or change meaning. Preserve names, numbers, URLs, code, and meaningful language mixing. Return only the corrected text.
 
 Transcript:
 $original''';
@@ -114,7 +129,8 @@ $original''';
   }) async {
     final original = text.trim();
     if (original.isEmpty || sourceLanguage == targetLanguage) return original;
-    final prompt = '''Translate the following text from $sourceLanguage to $targetLanguage.
+    final prompt =
+        '''Translate the following text from $sourceLanguage to $targetLanguage.
 ${native ? 'Use the native script of the target language.' : 'Use Latin/Roman transliteration only if the target language supports it.'}
 Preserve meaning, names, numbers, punctuation, and line breaks. Return only the translation, with no explanation.
 

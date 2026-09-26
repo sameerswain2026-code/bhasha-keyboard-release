@@ -51,7 +51,9 @@ class SettingsPanel extends StatelessWidget {
                   Icon(Icons.record_voice_over, size: 16, color: t.icon),
                   const SizedBox(width: 8),
                   Text(
-                    'Assistant name',
+                    kb.panelKeyboardField == 'voiceContext'
+                        ? 'Voice context'
+                        : 'Assistant name',
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
@@ -65,7 +67,9 @@ class SettingsPanel extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(8, 0, 8, 4),
               child: PanelTextField(
                 hintText: 'Wake word',
-                leadingIcon: Icons.record_voice_over,
+                leadingIcon: kb.panelKeyboardField == 'voiceContext'
+                    ? Icons.topic_outlined
+                    : Icons.record_voice_over,
               ),
             ),
             const Spacer(),
@@ -74,7 +78,7 @@ class SettingsPanel extends StatelessWidget {
               child: PanelMiniKeyboard(
                 compact: true,
                 onDone: () {
-                  kb.setAssistantName(kb.panelInputText);
+                  kb.savePanelKeyboardField();
                   kb.panelKeyboardClear();
                 },
               ),
@@ -221,19 +225,103 @@ class SettingsPanel extends StatelessWidget {
                 SwitchListTile(
                   dense: true,
                   title: Text(
-                    'Grammar, auto-correction and formalization',
+                    'Auto Correction',
+                    style: TextStyle(fontSize: 13, color: t.keyText),
+                  ),
+                  subtitle: const Text(
+                    'Fix obvious recognition and spelling mistakes',
+                  ),
+                  value: kb.autoCorrectionEnabled,
+                  activeThumbColor: t.accent,
+                  onChanged: kb.setAutoCorrection,
+                ),
+                SwitchListTile(
+                  dense: true,
+                  title: Text(
+                    'Grammar Correction',
+                    style: TextStyle(fontSize: 13, color: t.keyText),
+                  ),
+                  subtitle: const Text(
+                    'Correct genuine grammar errors conservatively',
+                  ),
+                  value: kb.grammarCorrectionEnabled,
+                  activeThumbColor: t.accent,
+                  onChanged: kb.setGrammarCorrection,
+                ),
+                SwitchListTile(
+                  dense: true,
+                  title: Text(
+                    'Formalization',
+                    style: TextStyle(fontSize: 13, color: t.keyText),
+                  ),
+                  subtitle: const Text(
+                    'Use a suitable formal wording without changing meaning',
+                  ),
+                  value: kb.formalizationEnabled,
+                  activeThumbColor: t.accent,
+                  onChanged: kb.setFormalization,
+                ),
+                SwitchListTile(
+                  dense: true,
+                  title: Text(
+                    'Smart Correction',
+                    style: TextStyle(fontSize: 13, color: t.keyText),
+                  ),
+                  subtitle: const Text(
+                    'Detect self-corrections and accidental repetitions',
+                  ),
+                  value: kb.smartCorrectionEnabled,
+                  activeThumbColor: t.accent,
+                  onChanged: kb.setSmartCorrection,
+                ),
+                SwitchListTile(
+                  dense: true,
+                  title: Text(
+                    'Context-Aware Processing',
                     style: TextStyle(fontSize: 13, color: t.keyText),
                   ),
                   subtitle: Text(
-                    kb.speechPolishingEnabled
-                        ? 'On - pronunciation, grammar and wording are polished'
-                        : 'Off - fastest real-time speech insertion',
+                    kb.contextAwareEnabled
+                        ? 'Uses “${kb.voiceContext.isEmpty ? 'no context' : kb.voiceContext}” as a supporting signal'
+                        : 'Off - no additional context processing',
                     style: TextStyle(fontSize: 11, color: t.keyTextSecondary),
                   ),
-                  value: kb.speechPolishingEnabled,
+                  value: kb.contextAwareEnabled,
                   activeThumbColor: t.accent,
-                  onChanged: kb.setSpeechPolishing,
+                  onChanged: kb.setContextAware,
                 ),
+                ListTile(
+                  dense: true,
+                  enabled: kb.contextAwareEnabled,
+                  leading: Icon(
+                    Icons.topic_outlined,
+                    size: 18,
+                    color: kb.contextAwareEnabled ? t.accent : t.icon,
+                  ),
+                  title: Text(
+                    'Current context',
+                    style: TextStyle(fontSize: 13, color: t.keyText),
+                  ),
+                  subtitle: Text(
+                    kb.voiceContext.isEmpty ? 'Not set' : kb.voiceContext,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: 11, color: t.keyTextSecondary),
+                  ),
+                  trailing: const Icon(Icons.edit_outlined, size: 16),
+                  onTap: kb.contextAwareEnabled
+                      ? () => kb.openPanelKeyboard(
+                          initialText: kb.voiceContext,
+                          field: 'voiceContext',
+                        )
+                      : null,
+                ),
+                if (kb.contextAwareEnabled && kb.voiceContext.isNotEmpty)
+                  ListTile(
+                    dense: true,
+                    title: const Text('Clear context'),
+                    onTap: () => kb.setVoiceContext(''),
+                  ),
                 const Divider(height: 12),
                 // ---- AI Web Assistant (optional, opt-in feature) ----
                 ListTile(

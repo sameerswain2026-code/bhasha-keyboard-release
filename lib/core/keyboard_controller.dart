@@ -19,6 +19,7 @@ import '../engine/gemini_service.dart';
 import '../engine/sarvam_translation_service.dart';
 import '../engine/suggestion_engine.dart';
 import '../engine/snippet_store.dart';
+import '../engine/speech_processing_engine.dart';
 import '../engine/transliterator.dart';
 import '../engine/translation_engine.dart';
 import '../engine/voice_engine.dart';
@@ -112,6 +113,8 @@ class KeyboardController extends ChangeNotifier {
   final LocalSnippetStore snippets = LocalSnippetStore();
   final LocalDictionary dictionary = LocalDictionary();
   final WritingAssistant writingAssistant = const WritingAssistant();
+  final SpeechProcessingEngine _speechProcessor =
+      const SpeechProcessingEngine();
 
   List<LocalSnippet> get localSnippets => snippets.items;
   List<DictionaryEntry> get dictionaryEntries => dictionary.items;
@@ -378,6 +381,18 @@ class KeyboardController extends ChangeNotifier {
   final SarvamTranslationService _sarvamTranslator = SarvamTranslationService();
   bool _speechPolishingEnabled = false;
   bool get speechPolishingEnabled => _speechPolishingEnabled;
+  bool _autoCorrectionEnabled = false;
+  bool get autoCorrectionEnabled => _autoCorrectionEnabled;
+  bool _grammarCorrectionEnabled = false;
+  bool get grammarCorrectionEnabled => _grammarCorrectionEnabled;
+  bool _formalizationEnabled = false;
+  bool get formalizationEnabled => _formalizationEnabled;
+  bool _smartCorrectionEnabled = false;
+  bool get smartCorrectionEnabled => _smartCorrectionEnabled;
+  bool _contextAwareEnabled = false;
+  bool get contextAwareEnabled => _contextAwareEnabled;
+  String _voiceContext = '';
+  String get voiceContext => _voiceContext;
 
   // ---- Translate mode config (saved/active) ----
   // Default: Source=Odia, Target=English, Output=Roman.
@@ -627,6 +642,8 @@ class KeyboardController extends ChangeNotifier {
   bool get panelKeyboardActive => _panelKeyboardActive;
   String _panelInputText = '';
   String get panelInputText => _panelInputText;
+  String _panelKeyboardField = 'assistantName';
+  String get panelKeyboardField => _panelKeyboardField;
 
   /// Pre-fills the panel input text without opening the mini-keyboard
   /// (e.g. seeding the translate field with the current selection).
@@ -661,10 +678,24 @@ class KeyboardController extends ChangeNotifier {
 
   /// Opens the on-panel mini-keyboard for the given field, seeding it
   /// with [initialText] (kept when re-opening the same field).
-  void openPanelKeyboard({String initialText = ''}) {
+  void openPanelKeyboard({
+    String initialText = '',
+    String field = 'assistantName',
+  }) {
     _feedback();
     _panelInputText = initialText;
+    _panelKeyboardField = field;
     _panelKeyboardActive = true;
+    notifyListeners();
+  }
+
+  void savePanelKeyboardField() {
+    if (_panelKeyboardField == 'voiceContext') {
+      setVoiceContext(_panelInputText);
+    } else {
+      setAssistantName(_panelInputText);
+    }
+    _panelKeyboardActive = false;
     notifyListeners();
   }
 
@@ -738,6 +769,19 @@ class KeyboardController extends ChangeNotifier {
       _hapticsEnabled = prefs.getBool('haptics') ?? true;
       _soundEnabled = prefs.getBool('sound') ?? false;
       _speechPolishingEnabled = prefs.getBool('speechPolishing') ?? false;
+      final legacyPolish = _speechPolishingEnabled;
+      _autoCorrectionEnabled = prefs.containsKey('autoCorrection')
+          ? (prefs.getBool('autoCorrection') ?? false)
+          : legacyPolish;
+      _grammarCorrectionEnabled = prefs.containsKey('grammarCorrection')
+          ? (prefs.getBool('grammarCorrection') ?? false)
+          : legacyPolish;
+      _formalizationEnabled = prefs.containsKey('formalization')
+          ? (prefs.getBool('formalization') ?? false)
+          : legacyPolish;
+      _smartCorrectionEnabled = prefs.getBool('smartCorrection') ?? false;
+      _contextAwareEnabled = prefs.getBool('contextAware') ?? false;
+      _voiceContext = prefs.getString('voiceContext') ?? '';
       final micModeName = prefs.getString('micMode');
       if (micModeName == 'translate')
         _micMode = MicMode.translate;
@@ -883,7 +927,24 @@ class KeyboardController extends ChangeNotifier {
             case 'sound':
               if (v is bool) _soundEnabled = v;
             case 'speechPolishing':
-              if (v is bool) _speechPolishingEnabled = v;
+              if (v is bool) {
+                _speechPolishingEnabled = v;
+                _autoCorrectionEnabled = v;
+                _grammarCorrectionEnabled = v;
+                _formalizationEnabled = v;
+              }
+            case 'autoCorrection':
+              if (v is bool) _autoCorrectionEnabled = v;
+            case 'grammarCorrection':
+              if (v is bool) _grammarCorrectionEnabled = v;
+            case 'formalization':
+              if (v is bool) _formalizationEnabled = v;
+            case 'smartCorrection':
+              if (v is bool) _smartCorrectionEnabled = v;
+            case 'contextAware':
+              if (v is bool) _contextAwareEnabled = v;
+            case 'voiceContext':
+              if (v is String) _voiceContext = v;
             case 'translateSource':
               if (v is String) _translateSource = LanguageRegistry.byId(v);
             case 'translateTarget':
@@ -1548,6 +1609,45 @@ class KeyboardController extends ChangeNotifier {
   void setSpeechPolishing(bool v) {
     _speechPolishingEnabled = v;
     _persist('speechPolishing', v);
+    setAutoCorrection(v);
+    setGrammarCorrection(v);
+    setFormalization(v);
+    notifyListeners();
+  }
+
+  void setAutoCorrection(bool v) {
+    _autoCorrectionEnabled = v;
+    _persist('autoCorrection', v);
+    notifyListeners();
+  }
+
+  void setGrammarCorrection(bool v) {
+    _grammarCorrectionEnabled = v;
+    _persist('grammarCorrection', v);
+    notifyListeners();
+  }
+
+  void setFormalization(bool v) {
+    _formalizationEnabled = v;
+    _persist('formalization', v);
+    notifyListeners();
+  }
+
+  void setSmartCorrection(bool v) {
+    _smartCorrectionEnabled = v;
+    _persist('smartCorrection', v);
+    notifyListeners();
+  }
+
+  void setContextAware(bool v) {
+    _contextAwareEnabled = v;
+    _persist('contextAware', v);
+    notifyListeners();
+  }
+
+  void setVoiceContext(String value) {
+    _voiceContext = value.trim();
+    _persist('voiceContext', _voiceContext);
     notifyListeners();
   }
 
@@ -1644,12 +1744,12 @@ class KeyboardController extends ChangeNotifier {
   Future<void> _processVoiceFinal(String rawText) async {
     // Committed text is never erased: append finalized speech.
     if (rawText.trim().isEmpty) return;
+    final processedText = await _processVoiceText(rawText.trim());
+    if (processedText.isEmpty) return;
     // Translate is polished once after translation; Auto is
     // polished once before insertion/assistant routing. This avoids the old
     // two-Gemini-call delay in Translate mode.
-    final text = micMode == MicMode.translate
-        ? rawText.trim()
-        : await _polishVoiceText(rawText.trim());
+    final text = processedText;
 
     // AI Web Assistant middleware (optional, opt-in - see the field docs
     // on [_ai]/[_aiCapture] above). Only ever consulted for
@@ -1700,18 +1800,42 @@ class KeyboardController extends ChangeNotifier {
     );
   }
 
+  Future<String> _processVoiceText(String rawText) async {
+    final text = _speechProcessor.process(
+      rawText,
+      language: _voiceRecognitionLanguage,
+      smartCorrection: _smartCorrectionEnabled,
+    );
+    final needsAiProcessing =
+        _autoCorrectionEnabled ||
+        _grammarCorrectionEnabled ||
+        _formalizationEnabled ||
+        (_contextAwareEnabled && _voiceContext.trim().isNotEmpty);
+    if (!needsAiProcessing) return text;
+    return _polishVoiceText(text, language: 'the detected language');
+  }
+
   Future<String> _polishVoiceText(
     String text, {
     String? language,
     bool? native,
   }) {
-    if (!_speechPolishingEnabled) return Future.value(text);
+    if (!(_autoCorrectionEnabled ||
+        _grammarCorrectionEnabled ||
+        _formalizationEnabled ||
+        (_contextAwareEnabled && _voiceContext.trim().isNotEmpty))) {
+      return Future.value(text);
+    }
     final selectedLanguage = language ?? 'the detected language';
     final selectedNative = native ?? _autoMixStyle == ScriptMode.native;
     return _speechPolisher.polishSpeech(
       text,
       language: selectedLanguage,
       native: selectedNative,
+      autoCorrection: _autoCorrectionEnabled,
+      grammarCorrection: _grammarCorrectionEnabled,
+      formalization: _formalizationEnabled,
+      context: _contextAwareEnabled ? _voiceContext : '',
     );
   }
 
