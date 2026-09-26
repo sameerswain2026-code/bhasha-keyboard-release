@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
@@ -24,16 +23,15 @@ class _DocumentContextScreenState extends State<DocumentContextScreen> {
   Future<void> _pickDocument() async {
     setState(() { _loading = true; _error = null; });
     try {
-      final result = await FilePicker.pickFiles(
+      final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: const ['pdf', 'txt', 'md', 'markdown'],
+        withData: true,
       );
-      if (result.isEmpty) { setState(() => _loading = false); return; }
-      final file = result.single;
-      final path = file.path;
-      if (path == null || path.isEmpty) throw Exception('Could not read the selected file.');
-      final bytes = await File(path).readAsBytes();
-      if (bytes.isEmpty) throw Exception('The selected file is empty.');
+      if (result == null) { setState(() => _loading = false); return; }
+      final file = result.files.single;
+      final bytes = file.bytes;
+      if (bytes == null || bytes.isEmpty) throw Exception('The selected file is empty.');
       final text = await _extract(file.name, bytes);
       if (text.trim().isEmpty) throw Exception('No readable text was found.');
       final clipped = text.trim().length > 24000 ? text.trim().substring(0, 24000) : text.trim();
