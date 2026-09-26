@@ -397,6 +397,14 @@ class BhashaImeService : InputMethodService() {
         return root
     }
 
+    override fun onStartInput(attribute: EditorInfo?, restarting: Boolean) {
+        super.onStartInput(attribute, restarting)
+        // A single IME service can serve several apps without recreating its
+        // Flutter engine. Reset before the new editor view is attached so a
+        // Settings/Translate/Emoji page can never leak into the next app.
+        imeChannel?.invokeMethod("resetTransientState", null)
+    }
+
     override fun onStartInputView(info: EditorInfo?, restarting: Boolean) {
         super.onStartInputView(info, restarting)
         // Some OTP/password screens request the IME while the host window is
