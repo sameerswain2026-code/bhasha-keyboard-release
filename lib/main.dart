@@ -234,11 +234,7 @@ class DemoEditorScreen extends StatelessWidget {
                   ),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                    child: Row(children: [
-                      Expanded(child: _HomeAction(icon: Icons.tune_rounded, label: 'Personalize', onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const PersonalizationScreen())), color: t.accent)),
-                      const SizedBox(width: 10),
-                      Expanded(child: _HomeAction(icon: Icons.settings_outlined, label: 'Settings', onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AppSettingsScreen())), color: const Color(0xFF7C3AED))),
-                    ]),
+                    child: _HomeAction(icon: Icons.settings_outlined, label: 'Settings & context', onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AppSettingsScreen())), color: const Color(0xFF7C3AED)),
                   ),
                   Container(
                     margin: const EdgeInsets.fromLTRB(12, 7, 12, 8),

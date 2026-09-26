@@ -244,6 +244,29 @@ class SettingsPanel extends StatelessWidget {
                     onTap: () => kb.setVoiceContext(''),
                   ),
                 const Divider(height: 12),
+                ListTile(
+                  dense: true,
+                  leading: Icon(Icons.smart_toy_outlined, size: 18, color: t.accent),
+                  title: Text('Smart AI customization', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: t.keyText)),
+                  subtitle: Text('Ask it to write a letter, find a video, search Google, or help with a task.', style: TextStyle(fontSize: 11, color: t.keyTextSecondary)),
+                ),
+                SwitchListTile(
+                  dense: true,
+                  title: Text('Enable Smart AI', style: TextStyle(fontSize: 13, color: t.keyText)),
+                  subtitle: Text(kb.aiAssistantEnabled ? 'Ready during voice typing' : 'Off until you turn it on', style: TextStyle(fontSize: 11, color: t.keyTextSecondary)),
+                  value: kb.aiAssistantEnabled,
+                  activeThumbColor: t.accent,
+                  onChanged: kb.setAiAssistantEnabled,
+                ),
+                ListTile(
+                  dense: true,
+                  enabled: kb.aiAssistantEnabled,
+                  title: Text('AI name / wake word', style: TextStyle(fontSize: 13, color: kb.aiAssistantEnabled ? t.keyText : t.keyTextSecondary)),
+                  subtitle: Text('Currently: "${kb.assistantName}"', style: TextStyle(fontSize: 11, color: t.keyTextSecondary)),
+                  trailing: Icon(Icons.edit_outlined, size: 16, color: kb.aiAssistantEnabled ? t.accent : t.icon),
+                  onTap: kb.aiAssistantEnabled ? () => kb.openPanelKeyboard(initialText: kb.assistantName) : null,
+                ),
+                const Divider(height: 12),
                 SwitchListTile(
                   dense: true,
                   title: Text(
@@ -320,6 +343,18 @@ class SettingsPanel extends StatelessWidget {
                     onChanged: (a) {
                       if (a != null) kb.setEditorAction(a);
                     },
+                  ),
+                ),
+                const Divider(height: 12),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(10, 4, 10, 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(children: [Icon(Icons.school_outlined, size: 15, color: t.accent), const SizedBox(width: 6), Text('Minor Project', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: t.keyText))]),
+                      const SizedBox(height: 5),
+                      Text('Sameer Swain\nB.Tech CSE, 7th Semester Student\nSanjay Memorial Institute Of Technology\nChandhipadar, Berhampur, Ganjam, Odisha', style: TextStyle(fontSize: 10.5, height: 1.45, color: t.keyTextSecondary)),
+                    ],
                   ),
                 ),
               ],
