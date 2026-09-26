@@ -47,6 +47,14 @@ class MainActivity : FlutterActivity() {
                 "getManagementDestination" -> {
                     result.success(intent.getStringExtra("management_destination"))
                 }
+                "openManagementApp" -> {
+                    val destination = call.argument<String>("destination") ?: "settings"
+                    startActivity(Intent(this, MainActivity::class.java).apply {
+                        putExtra("management_destination", destination)
+                        addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                    })
+                    result.success(true)
+                }
                 "isImeEnabled" -> {
                     val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
                     val enabled = imm.enabledInputMethodList.any {

@@ -114,6 +114,18 @@ class SettingsPanel extends StatelessWidget {
             child: ListView(
               padding: const EdgeInsets.symmetric(horizontal: 8),
               children: [
+                Card(
+                  margin: const EdgeInsets.fromLTRB(4, 6, 4, 8),
+                  color: t.accent.withValues(alpha: .12),
+                  child: ListTile(
+                    dense: true,
+                    leading: Icon(Icons.dashboard_customize_outlined, color: t.accent),
+                    title: Text('Open full settings', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: t.keyText)),
+                    subtitle: Text('Context, AI, snippets and setup', style: TextStyle(fontSize: 11, color: t.keyTextSecondary)),
+                    trailing: Icon(Icons.open_in_new, size: 16, color: t.accent),
+                    onTap: () => ImeSetupHelper.openManagement(),
+                  ),
+                ),
                 if (ImeSetupHelper.isSupported) ...[
                   ListTile(
                     dense: true,

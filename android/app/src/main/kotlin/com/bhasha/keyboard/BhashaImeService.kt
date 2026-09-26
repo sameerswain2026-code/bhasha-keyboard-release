@@ -258,6 +258,24 @@ class BhashaImeService : InputMethodService() {
                     result.success(true)
                 }
                 "isImeEnabled", "isImeSelected" -> result.success(true)
+                "openManagementApp" -> {
+                    val destination = call.argument<String>("destination") ?: "settings"
+                    startActivity(Intent(this, MainActivity::class.java).apply {
+                        putExtra("management_destination", destination)
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                    })
+                    result.success(true)
+                }
+                "openManagementApp" -> {
+                    val destination = call.argument<String>("destination") ?: "settings"
+                    startActivity(Intent(this, MainActivity::class.java).apply {
+                        putExtra("management_destination", destination)
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                    })
+                    result.success(true)
+                }
                 else -> result.notImplemented()
             }
         }

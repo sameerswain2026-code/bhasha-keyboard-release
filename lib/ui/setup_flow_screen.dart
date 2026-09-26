@@ -1,6 +1,8 @@
 /// Premium first-run setup and feature education for Bhasha Keyboard.
 library;
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../ime/setup_helper.dart';
@@ -19,17 +21,23 @@ class _SetupFlowScreenState extends State<SetupFlowScreen>
   bool _selected = false;
   bool _micGranted = false;
   bool _checked = false;
+  int _showcaseIndex = 0;
+  Timer? _showcaseTimer;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _showcaseTimer = Timer.periodic(const Duration(seconds: 3), (_) {
+      if (mounted) setState(() => _showcaseIndex = (_showcaseIndex + 1) % 4);
+    });
     _refreshStatus();
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _showcaseTimer?.cancel();
     super.dispose();
   }
 
@@ -80,7 +88,7 @@ class _SetupFlowScreenState extends State<SetupFlowScreen>
                     _Hero(primary: primary, text: text, muted: muted),
                     const SizedBox(height: 18),
                     Text(
-                      'Built for the way India speaks',
+                      'A calmer, smarter way to type',
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.w900,
@@ -89,7 +97,7 @@ class _SetupFlowScreenState extends State<SetupFlowScreen>
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      'One keyboard for 22 Indian languages, Auto voice typing, manual translation, and your own shortcuts.',
+                      'Voice, translation, correction, and your personal context — designed to feel effortless.',
                       style: TextStyle(
                         fontSize: 13.5,
                         height: 1.4,
@@ -97,33 +105,7 @@ class _SetupFlowScreenState extends State<SetupFlowScreen>
                       ),
                     ),
                     const SizedBox(height: 14),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _Feature(
-                            icon: Icons.language,
-                            title: '22 languages',
-                            color: primary,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: _Feature(
-                            icon: Icons.auto_awesome,
-                            title: 'Auto voice',
-                            color: const Color(0xFF7C3AED),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: _Feature(
-                            icon: Icons.translate,
-                            title: 'Translate',
-                            color: const Color(0xFF0F766E),
-                          ),
-                        ),
-                      ],
-                    ),
+                    _AnimatedShowcase(index: _showcaseIndex, primary: primary),
                     const SizedBox(height: 22),
                     Text(
                       'Get started in three steps',
@@ -268,7 +250,7 @@ class _Hero extends StatelessWidget {
               ),
               const SizedBox(width: 12),
               const Text(
-                'BHASHA KEYBOARD',
+                'SAMEER',
                 style: TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.w800,
@@ -303,39 +285,66 @@ class _Hero extends StatelessWidget {
   );
 }
 
-class _Feature extends StatelessWidget {
-  const _Feature({
-    required this.icon,
-    required this.title,
-    required this.color,
-  });
-  final IconData icon;
-  final String title;
-  final Color color;
+class _AnimatedShowcase extends StatelessWidget {
+  const _AnimatedShowcase({required this.index, required this.primary});
+  final int index;
+  final Color primary;
+
+  static const _items = [
+    (Icons.mic_rounded, 'Speak naturally', 'Voice typing that follows your pace.'),
+    (Icons.translate_rounded, 'Translate in a tap', 'Move between languages without leaving the keyboard.'),
+    (Icons.auto_awesome_rounded, 'Write with confidence', 'Smart correction learns the way you write.'),
+    (Icons.description_rounded, 'Bring your context', 'Use a document to make suggestions more relevant.'),
+  ];
+
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 7),
-    decoration: BoxDecoration(
-      color: color.withValues(alpha: .09),
-      borderRadius: BorderRadius.circular(15),
-      border: Border.all(color: color.withValues(alpha: .18)),
-    ),
-    child: Column(
-      children: [
-        Icon(icon, color: color, size: 22),
-        const SizedBox(height: 5),
-        Text(
-          title,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 10.5,
-            fontWeight: FontWeight.w800,
-            color: color,
-          ),
+  Widget build(BuildContext context) {
+    final item = _items[index];
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 450),
+      transitionBuilder: (child, animation) => FadeTransition(
+        opacity: animation,
+        child: SlideTransition(
+          position: Tween(begin: const Offset(.08, 0), end: Offset.zero)
+              .animate(animation),
+          child: child,
         ),
-      ],
-    ),
-  );
+      ),
+      child: Container(
+        key: ValueKey(index),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: primary.withValues(alpha: .09),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: primary.withValues(alpha: .22)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 46,
+              height: 46,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(colors: [primary, const Color(0xFF7C3AED)]),
+                borderRadius: BorderRadius.circular(15),
+              ),
+              child: Icon(item.$1, color: Colors.white, size: 24),
+            ),
+            const SizedBox(width: 13),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(item.$2, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14)),
+                  const SizedBox(height: 3),
+                  Text(item.$3, style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12, height: 1.25)),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _StepCard extends StatelessWidget {

@@ -16,6 +16,7 @@ import 'ui/kb_theme.dart';
 import 'ui/keyboard_view.dart';
 import 'ui/setup_flow_screen.dart';
 import 'ui/personalization_screen.dart';
+import 'ui/app_settings_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -119,6 +120,7 @@ class _AppHomeState extends State<_AppHome> {
       return SetupFlowScreen(onContinue: _completeSetup);
     }
     if (_managementDestination != null) {
+      if (_managementDestination == 'settings') return const AppSettingsScreen();
       return PersonalizationScreen(
         initialTab: _managementDestination == 'dictionary' ? 1 : 0,
       );
@@ -397,6 +399,29 @@ class DemoEditorScreen extends StatelessWidget {
                             Icon(Icons.chevron_right, color: t.accent),
                           ],
                         ),
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 2),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(16),
+                      onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AppSettingsScreen())),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF7C3AED).withValues(alpha: .08),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: const Color(0xFF7C3AED).withValues(alpha: .22)),
+                        ),
+                        child: Row(children: [
+                          const Icon(Icons.settings_outlined, color: Color(0xFF7C3AED)),
+                          const SizedBox(width: 10),
+                          Expanded(child: Text('Settings & context', style: TextStyle(fontWeight: FontWeight.w800, color: t.keyText))),
+                          Text('Voice • AI • setup', style: TextStyle(fontSize: 11, color: t.keyTextSecondary)),
+                          const SizedBox(width: 4),
+                          const Icon(Icons.chevron_right, color: Color(0xFF7C3AED)),
+                        ]),
                       ),
                     ),
                   ),

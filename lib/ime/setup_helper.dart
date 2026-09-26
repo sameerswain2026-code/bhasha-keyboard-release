@@ -53,4 +53,10 @@ class ImeSetupHelper {
       await _system.invokeMethod('requestMicPermission');
     } catch (_) {}
   }
+
+  static Future<void> openManagement({String destination = 'settings'}) async {
+    try {
+      await _system.invokeMethod('openManagementApp', {'destination': destination});
+    } catch (_) {}
+  }
 }
