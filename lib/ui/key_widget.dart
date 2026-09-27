@@ -65,11 +65,11 @@ class _KeyWidgetState extends State<KeyWidget> {
 
     return Expanded(
       flex: widget.flex,
-      child: Padding(
-        // Tighter gutters make each key body and hit target larger without
-        // changing the fixed keyboard width.
-        padding: const EdgeInsets.all(1),
-        child: GestureDetector(
+      child: GestureDetector(
+        // The gesture surface deliberately fills the complete flex cell.
+        // The old outer Padding left a 1dp dead strip around every key, so a
+        // slow edge touch could land in the gutter instead of typing. Keep
+        // the visual gutter inside the gesture surface, Gboard-style.
           behavior: HitTestBehavior.opaque,
           onTapDown: (_) {
             setState(() => _pressed = true);
@@ -100,7 +100,9 @@ class _KeyWidgetState extends State<KeyWidget> {
                   setState(() => _pressed = false);
                   widget.onLongPressEnd!.call();
                 },
-          child: AnimatedContainer(
+          child: Padding(
+            padding: const EdgeInsets.all(1),
+            child: AnimatedContainer(
             duration: Duration(
               milliseconds: KeyWidget.feedbackDurationMs.round().clamp(0, 120),
             ),
@@ -146,9 +148,9 @@ class _KeyWidgetState extends State<KeyWidget> {
                       color: fg,
                     ),
                   ),
+            ),
           ),
         ),
-      ),
     );
   }
 }

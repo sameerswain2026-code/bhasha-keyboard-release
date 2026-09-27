@@ -18,6 +18,7 @@ class AndroidSpeechProvider implements SpeechProvider {
   static const EventChannel _events = EventChannel('bhasha/speech_results');
 
   StreamSubscription<dynamic>? _subscription;
+  Timer? _restartTimer;
   void Function(VoiceResult)? _onResult;
   void Function(String)? _onError;
   bool _running = false;
@@ -43,7 +44,11 @@ class AndroidSpeechProvider implements SpeechProvider {
         if (event is! Map) return;
         final text = (event['text'] as String? ?? '').trim();
         if (text.isNotEmpty) {
-          _onResult?.call(VoiceResult(text, event['isFinal'] == true));
+          final isFinal = event['isFinal'] == true;
+          _onResult?.call(VoiceResult(text, isFinal));
+          // Android SpeechRecognizer often ends a segment after a final
+          // result. Restart it without ending the user's single mic session.
+          if (isFinal) _scheduleRecognizerRestart();
         }
         final error = (event['error'] as String? ?? '').trim();
         if (error.isNotEmpty) _onError?.call(error);
@@ -67,12 +72,32 @@ class AndroidSpeechProvider implements SpeechProvider {
   @override
   Future<void> stop() async {
     _running = false;
+    _restartTimer?.cancel();
+    _restartTimer = null;
     try {
       await _control.invokeMethod<void>('stopSpeech');
     } catch (_) {}
     await _subscription?.cancel();
     _subscription = null;
     _onResult = null;
+  }
+
+  void _scheduleRecognizerRestart() {
+    if (!_running) return;
+    _restartTimer?.cancel();
+    _restartTimer = Timer(const Duration(milliseconds: 120), () {
+      _restartTimer = null;
+      if (!_running) return;
+      unawaited(
+        _control.invokeMethod<void>('startSpeech', {
+          'locale': (_pack?.locale == null || _pack!.locale == 'unknown')
+              ? 'en-IN'
+              : _pack!.locale,
+        }).catchError((_) {
+          if (_running) _onError?.call('Speech recognition unavailable');
+        }),
+      );
+    });
   }
 
   @override
