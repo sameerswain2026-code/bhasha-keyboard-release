@@ -37,8 +37,19 @@ class WakeWordExtraction {
 class WakeWordDetector {
   const WakeWordDetector._();
 
-  static String _normalize(String token) =>
-      token.toLowerCase().replaceAll(RegExp(r'^[^a-z0-9]+|[^a-z0-9]+$'), '');
+  static final RegExp _leadingNonWord = RegExp(
+    r'^[^\p{L}\p{N}]+',
+    unicode: true,
+  );
+  static final RegExp _trailingNonWord = RegExp(
+    r'[^\p{L}\p{N}]+$',
+    unicode: true,
+  );
+
+  static String _normalize(String token) => token
+      .toLowerCase()
+      .replaceAll(_leadingNonWord, '')
+      .replaceAll(_trailingNonWord, '');
 
   static List<String> _tokenize(String text) =>
       text.split(RegExp(r'\s+')).where((t) => t.isNotEmpty).toList();

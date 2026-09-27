@@ -1742,45 +1742,39 @@ class KeyboardController extends ChangeNotifier {
   }
 
   Future<void> _processVoiceFinal(String rawText) async {
+    // Smart AI must see the original recognized speech first. Running the
+    // normal correction/translation pipeline before wake-word detection can
+    // translate or rewrite the assistant name, making an enabled assistant
+    // look like ordinary dictation. This also lets Smart AI work while the
+    // Translate mic mode is selected; non-command speech still follows the
+    // user's normal mode below.
+    final raw = rawText.trim();
+    if (raw.isEmpty) return;
+
+    if (_aiAssistantEnabled) {
+      if (_aiCapture.isCapturing) {
+        _aiCapture.feed(raw);
+        return;
+      }
+      if (_ai.matchesWakeWord(raw)) {
+        // Keep the live mic open until the configured five-second inactivity
+        // window expires, so a command can span many recognition segments.
+        if (voice.silenceTimeout < _aiCapture.timeout) {
+          voice.silenceTimeout = _aiCapture.timeout;
+        }
+        _aiCapture.start(raw);
+        return;
+      }
+    }
+
     // Committed text is never erased: append finalized speech.
-    if (rawText.trim().isEmpty) return;
-    final processedText = await _processVoiceText(rawText.trim());
+    final processedText = await _processVoiceText(raw);
     if (processedText.isEmpty) return;
     // Translate is polished once after translation; Auto is
     // polished once before insertion/assistant routing. This avoids the old
     // two-Gemini-call delay in Translate mode.
     final text = processedText;
 
-    // AI Web Assistant middleware (optional, opt-in - see the field docs
-    // on [_ai]/[_aiCapture] above). Only ever consulted for
-    // Auto, per spec Translate mode's existing behavior
-    // is left completely untouched. When the assistant is disabled,
-    // this entire block is skipped - zero wake-word scan, zero Tavily/
-    // Gemini call, zero behavior change versus the original pipeline.
-    if (micMode != MicMode.translate && _aiAssistantEnabled) {
-      if (_aiCapture.isCapturing) {
-        // A command is already being buffered: this finalized chunk is
-        // a continuation of the same spoken command (not new,
-        // independent speech) - append it to the buffer and keep
-        // waiting for mic-stop/inactivity rather than reacting to this
-        // chunk in isolation. Never insert it into the editor.
-        _aiCapture.feed(text);
-        return;
-      }
-      if (_ai.matchesWakeWord(text)) {
-        // Widen the mic's own silence auto-stop so it never ends the
-        // session before the user's configured AI inactivity timeout
-        // gets a chance to elapse - restored to the stock default by
-        // [_aiCapture]'s onCaptureEnd hook the instant the command
-        // finishes (finalized or cancelled). Only ever widens, never
-        // shortens, the mic's existing default behavior.
-        if (voice.silenceTimeout < _aiCapture.timeout) {
-          voice.silenceTimeout = _aiCapture.timeout;
-        }
-        _aiCapture.start(text);
-        return;
-      }
-    }
 
     // Auto: provider already returns the detected language in the correct script -
     // append synchronously (no async hop) so callers/tests observing the
